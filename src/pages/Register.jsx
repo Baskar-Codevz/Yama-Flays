@@ -102,36 +102,33 @@ const Register = () => {
 
     // =====================================================
     // API REQUEST
-    // =====================================================
+try {
+  setLoading(true);
 
-    try {
-      setLoading(true);
+  const response = await fetch(
+    "https://yama-flays-backend.onrender.com/api/auth/register",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name,
+        email,
+        password,
+      }),
+    },
+  );
 
-      const response = await fetch(
-        "http://localhost:5000/api/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name,
-            email,
-            password,
-          }),
-        },
-      );
+  const data = await response.json();
 
-      const data = await response.json();
+  console.log("Register response:", data);
 
-      console.log("Register response:", data);
-
-      if (!response.ok || !data.success) {
-        throw new Error(
-          data.message || "Unable to create your account.",
-        );
-      }
-
+  if (!response.ok || !data.success) {
+    throw new Error(
+      data.message || "Unable to create your account.",
+    );
+  }
       // =====================================================
       // SAVE LOGIN INFORMATION
       // =====================================================

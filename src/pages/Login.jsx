@@ -73,21 +73,23 @@ const Login = () => {
       // =====================================================
       // SEND LOGIN REQUEST TO BACKEND
       // =====================================================
+const response = await fetch(
+  "https://yama-flays-backend.onrender.com/api/auth/login",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: formData.email.trim(),
+      password: formData.password,
+    }),
+  },
+);
 
-      const response = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email.trim(),
-          password: formData.password,
-        }),
-      });
+const data = await response.json();
 
-      const data = await response.json();
-
-      console.log("Login response:", data);
+console.log("Login response:", data); 
 
       // =====================================================
       // HANDLE BACKEND ERROR
