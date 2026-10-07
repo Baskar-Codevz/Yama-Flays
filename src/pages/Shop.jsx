@@ -725,8 +725,7 @@ const Shop = () => {
           </ScrollReveal>
         </div>
       </section>
-
-      {/* =====================================================
+  {/* =====================================================
           TOOLBAR
       ===================================================== */}
 
@@ -900,9 +899,7 @@ const Shop = () => {
             </ScrollReveal>
           )}
 
-          {/* PRODUCTS */}
-
-          {!loading && !error && filteredProducts.length > 0 && (
+          {/* PRODUCTS */}{!loading && !error && filteredProducts.length > 0 && (
             <div className="grid grid-cols-2 gap-x-2.5 gap-y-6 sm:gap-x-5 sm:gap-y-8 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6 lg:gap-y-10">
               {filteredProducts.map((product, index) => (
                 <ScrollReveal
@@ -1139,3 +1136,6 @@ const Shop = () => {
 };
 
 export default Shop;
+
+
+
