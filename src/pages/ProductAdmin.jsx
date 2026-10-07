@@ -1,303 +1,303 @@
-import React, { useEffect, useState } from "react";
-import {
-  Plus,
-  Trash2,
-  Edit3,
-  X,
-  Upload,
-  Image as ImageIcon,
-  Package,
-  Save,
-  RefreshCw,
-  CheckCircle2,
-  AlertCircle,
-  Star,
-  Sparkles,
-  Layers3,
-  Boxes,
-} from "lucide-react";
+  import React, { useEffect, useState } from "react";
+  import {
+    Plus,
+    Trash2,
+    Edit3,
+    X,
+    Upload,
+    Image as ImageIcon,
+    Package,
+    Save,
+    RefreshCw,
+    CheckCircle2,
+    AlertCircle,
+    Star,
+    Sparkles,
+    Layers3,
+    Boxes,
+  } from "lucide-react";
 
-import {
-  createProduct,
-  uploadImage,
-  getProducts,
-  updateProduct,
-  deleteProduct,
-} from "../services/productApi";
+  import {
+    createProduct,
+    uploadImage,
+    getProducts,
+    updateProduct,
+    deleteProduct,
+  } from "../services/productApi";
 
-const API_BASE_URL = "https://yama-flays-backend.onrender.com";
+  const API_BASE_URL = "https://yama-flays-backend.onrender.com";
 
-const ProductAdmin = () => {
-  /* =========================================================
-     INITIAL FORM
-  ========================================================= */
+  const ProductAdmin = () => {
+    /* =========================================================
+      INITIAL FORM
+    ========================================================= */
 
-  const getInitialForm = () => ({
-    name: "",
-    description: "",
-    price: "",
-    originalPrice: "",
-    category: "",
-    collection: "",
-    images: [],
-    sizes: [
-      {
-        name: "",
-        stock: "",
-      },
-    ],
-    bestseller: false,
-    featured: false,
-    isActive: true,
-  });
-
-  /* =========================================================
-     STATE
-  ========================================================= */
-
-  const [formData, setFormData] = useState(getInitialForm());
-
-  const [products, setProducts] = useState([]);
-
-  const [loading, setLoading] = useState(false);
-  const [productsLoading, setProductsLoading] = useState(true);
-
-  const [editingId, setEditingId] = useState(null);
-
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("");
-
-  /* =========================================================
-     MESSAGE
-  ========================================================= */
-
-  const showMessage = (text, type = "info") => {
-    setMessage(text);
-    setMessageType(type);
-
-    setTimeout(() => {
-      setMessage("");
-      setMessageType("");
-    }, 4000);
-  };
-
-  /* =========================================================
-     LOAD PRODUCTS
-  ========================================================= */
-
-  const loadProducts = async () => {
-    try {
-      setProductsLoading(true);
-
-      const result = await getProducts();
-
-      if (Array.isArray(result)) {
-        setProducts(result);
-      } else {
-        setProducts(result?.products || []);
-      }
-    } catch (error) {
-      console.error("Failed to load products:", error);
-
-      showMessage(error?.message || "Failed to load products.", "error");
-    } finally {
-      setProductsLoading(false);
-    }
-  };
-
-  /* =========================================================
-     LOAD PRODUCTS ON PAGE LOAD
-  ========================================================= */
-
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
-  /* =========================================================
-     NORMAL INPUT CHANGE
-  ========================================================= */
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
-  /* =========================================================
-     IMAGE SELECTION
-  ========================================================= */
-
-  const handleImageChange = (e) => {
-    const files = Array.from(e.target.files || []);
-
-    if (files.length === 0) {
-      return;
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      images: [...prev.images, ...files],
-    }));
-
-    e.target.value = "";
-  };
-
-  /* =========================================================
-     REMOVE IMAGE
-  ========================================================= */
-
-  const removeImage = (indexToRemove) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, index) => index !== indexToRemove),
-    }));
-  };
-
-  /* =========================================================
-     SIZE CHANGE
-  ========================================================= */
-
-  const handleSizeChange = (index, field, value) => {
-    setFormData((prev) => {
-      const updatedSizes = [...prev.sizes];
-
-      updatedSizes[index] = {
-        ...updatedSizes[index],
-        [field]: value,
-      };
-
-      return {
-        ...prev,
-        sizes: updatedSizes,
-      };
-    });
-  };
-
-  /* =========================================================
-     ADD SIZE
-  ========================================================= */
-
-  const addSize = () => {
-    setFormData((prev) => ({
-      ...prev,
+    const getInitialForm = () => ({
+      name: "",
+      description: "",
+      price: "",
+      originalPrice: "",
+      category: "",
+      collection: "",
+      images: [],
       sizes: [
-        ...prev.sizes,
         {
           name: "",
           stock: "",
         },
       ],
-    }));
-  };
+      bestseller: false,
+      featured: false,
+      isActive: true,
+    });
 
-  /* =========================================================
-     REMOVE SIZE
-  ========================================================= */
+    /* =========================================================
+      STATE
+    ========================================================= */
 
-  const removeSize = (indexToRemove) => {
-    setFormData((prev) => ({
-      ...prev,
-      sizes: prev.sizes.filter((_, index) => index !== indexToRemove),
-    }));
-  };
+    const [formData, setFormData] = useState(getInitialForm());
 
-  /* =========================================================
-     RESET FORM
-  ========================================================= */
+    const [products, setProducts] = useState([]);
 
-  const resetForm = () => {
-    setFormData(getInitialForm());
-    setEditingId(null);
-  };
+    const [loading, setLoading] = useState(false);
+    const [productsLoading, setProductsLoading] = useState(true);
 
-  /* =========================================================
-     VALIDATION
-  ========================================================= */
+    const [editingId, setEditingId] = useState(null);
 
-  const validateForm = () => {
-    if (!formData.name.trim()) {
-      showMessage("Please enter a product name.", "error");
-      return false;
-    }
+    const [message, setMessage] = useState("");
+    const [messageType, setMessageType] = useState("");
 
-    if (!formData.description.trim()) {
-      showMessage("Please enter a product description.", "error");
-      return false;
-    }
+    /* =========================================================
+      MESSAGE
+    ========================================================= */
 
-    if (
-      formData.price === "" ||
-      Number.isNaN(Number(formData.price)) ||
-      Number(formData.price) < 0
-    ) {
-      showMessage("Please enter a valid selling price.", "error");
-      return false;
-    }
+    const showMessage = (text, type = "info") => {
+      setMessage(text);
+      setMessageType(type);
 
-    if (!formData.category) {
-      showMessage("Please select a category.", "error");
-      return false;
-    }
-
-    if (formData.originalPrice !== "") {
-      if (
-        Number.isNaN(Number(formData.originalPrice)) ||
-        Number(formData.originalPrice) < 0
-      ) {
-        showMessage("Please enter a valid original price.", "error");
-        return false;
-      }
-    }
-
-    if (formData.images.length === 0) {
-      showMessage("Please select at least one product image.", "error");
-      return false;
-    }
-
-    return true;
-  };
-
-  /* =========================================================
-     PREPARE PRODUCT DATA
-  ========================================================= */
-
-  const prepareProductData = (uploadedImages = []) => {
-    const data = {
-      name: formData.name.trim(),
-
-      description: formData.description.trim(),
-
-      price: Number(formData.price),
-
-      category: formData.category,
-
-      collection: formData.collection.trim(),
-
-      images: uploadedImages,
-
-      sizes: formData.sizes
-        .filter((size) => size.name && size.name.trim() !== "")
-        .map((size) => ({
-          name: size.name.trim(),
-          stock: size.stock === "" ? 0 : Number(size.stock),
-        })),
-
-      bestseller: Boolean(formData.bestseller),
-
-      featured: Boolean(formData.featured),
-
-      isActive: Boolean(formData.isActive),
+      setTimeout(() => {
+        setMessage("");
+        setMessageType("");
+      }, 4000);
     };
 
-    if (formData.originalPrice !== "") {
-      data.originalPrice = Number(formData.originalPrice);
-    }
+    /* =========================================================
+      LOAD PRODUCTS
+    ========================================================= */
 
-    return data;
-  };
+    const loadProducts = async () => {
+      try {
+        setProductsLoading(true);
+
+        const result = await getProducts();
+
+        if (Array.isArray(result)) {
+          setProducts(result);
+        } else {
+          setProducts(result?.products || []);
+        }
+      } catch (error) {
+        console.error("Failed to load products:", error);
+
+        showMessage(error?.message || "Failed to load products.", "error");
+      } finally {
+        setProductsLoading(false);
+      }
+    };
+
+    /* =========================================================
+      LOAD PRODUCTS ON PAGE LOAD
+    ========================================================= */
+
+    useEffect(() => {
+      loadProducts();
+    }, []);
+
+    /* =========================================================
+      NORMAL INPUT CHANGE
+    ========================================================= */
+
+    const handleChange = (e) => {
+      const { name, value, type, checked } = e.target;
+
+      setFormData((prev) => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      }));
+    };
+
+    /* =========================================================
+      IMAGE SELECTION
+    ========================================================= */
+
+    const handleImageChange = (e) => {
+      const files = Array.from(e.target.files || []);
+
+      if (files.length === 0) {
+        return;
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...files],
+      }));
+
+      e.target.value = "";
+    };
+
+    /* =========================================================
+      REMOVE IMAGE
+    ========================================================= */
+
+    const removeImage = (indexToRemove) => {
+      setFormData((prev) => ({
+        ...prev,
+        images: prev.images.filter((_, index) => index !== indexToRemove),
+      }));
+    };
+
+    /* =========================================================
+      SIZE CHANGE
+    ========================================================= */
+
+    const handleSizeChange = (index, field, value) => {
+      setFormData((prev) => {
+        const updatedSizes = [...prev.sizes];
+
+        updatedSizes[index] = {
+          ...updatedSizes[index],
+          [field]: value,
+        };
+
+        return {
+          ...prev,
+          sizes: updatedSizes,
+        };
+      });
+    };
+
+    /* =========================================================
+      ADD SIZE
+    ========================================================= */
+
+    const addSize = () => {
+      setFormData((prev) => ({
+        ...prev,
+        sizes: [
+          ...prev.sizes,
+          {
+            name: "",
+            stock: "",
+          },
+        ],
+      }));
+    };
+
+    /* =========================================================
+      REMOVE SIZE
+    ========================================================= */
+
+    const removeSize = (indexToRemove) => {
+      setFormData((prev) => ({
+        ...prev,
+        sizes: prev.sizes.filter((_, index) => index !== indexToRemove),
+      }));
+    };
+
+    /* =========================================================
+      RESET FORM
+    ========================================================= */
+
+    const resetForm = () => {
+      setFormData(getInitialForm());
+      setEditingId(null);
+    };
+
+    /* =========================================================
+      VALIDATION
+    ========================================================= */
+
+    const validateForm = () => {
+      if (!formData.name.trim()) {
+        showMessage("Please enter a product name.", "error");
+        return false;
+      }
+
+      if (!formData.description.trim()) {
+        showMessage("Please enter a product description.", "error");
+        return false;
+      }
+
+      if (
+        formData.price === "" ||
+        Number.isNaN(Number(formData.price)) ||
+        Number(formData.price) < 0
+      ) {
+        showMessage("Please enter a valid selling price.", "error");
+        return false;
+      }
+
+      if (!formData.category) {
+        showMessage("Please select a category.", "error");
+        return false;
+      }
+
+      if (formData.originalPrice !== "") {
+        if (
+          Number.isNaN(Number(formData.originalPrice)) ||
+          Number(formData.originalPrice) < 0
+        ) {
+          showMessage("Please enter a valid original price.", "error");
+          return false;
+        }
+      }
+
+      if (formData.images.length === 0) {
+        showMessage("Please select at least one product image.", "error");
+        return false;
+      }
+
+      return true;
+    };
+
+    /* =========================================================
+      PREPARE PRODUCT DATA
+    ========================================================= */
+
+    const prepareProductData = (uploadedImages = []) => {
+      const data = {
+        name: formData.name.trim(),
+
+        description: formData.description.trim(),
+
+        price: Number(formData.price),
+
+        category: formData.category,
+
+        collectionName: formData.collection.trim(),
+
+        images: uploadedImages,
+
+        sizes: formData.sizes
+          .filter((size) => size.name && size.name.trim() !== "")
+          .map((size) => ({
+            name: size.name.trim(),
+            stock: size.stock === "" ? 0 : Number(size.stock),
+          })),
+
+        bestseller: Boolean(formData.bestseller),
+
+        featured: Boolean(formData.featured),
+
+        isActive: Boolean(formData.isActive),
+      };
+
+      if (formData.originalPrice !== "") {
+        data.originalPrice = Number(formData.originalPrice);
+      }
+
+      return data;
+    };
 
   /* =========================================================
      UPLOAD IMAGES
