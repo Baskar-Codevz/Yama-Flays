@@ -1,5 +1,5 @@
-const API_URL = "http://localhost:5000/api/products";
-const UPLOAD_URL = "http://localhost:5000/api/upload";
+const API_URL = "https://yama-flays-backend.onrender.com/api/products";
+const UPLOAD_URL = "https://yama-flays-backend.onrender.com/api/upload";
 
 /* =========================================================
    GET TOKEN
