@@ -1,237 +1,980 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Search,
+  UserRound,
+  Heart,
+  ShoppingBag,
+  Menu,
+  X,
+  Sparkles,
+  ArrowRight,
+} from "lucide-react";
+
 import { useCart } from "../Context/CartContext";
 import { useWishlist } from "../Context/WishlistContext";
-import { Search, UserRound, Heart, ShoppingBag, Menu, X, User, } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
 
 const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-
+  const location = useLocation();
   const navigate = useNavigate();
 
-  const { wishlistCount } = useWishlist();
   const { cartCount } = useCart();
+  const { wishlistCount } = useWishlist();
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [scrolled, setScrolled] = useState(false);
 
   const navLinks = [
-    { name: "Home", href: "/" },
-    { name: "Shop Bangles", href: "/shop" },
-    { name: "Collections", href: "/collections" },
-    { name: "About Us", href: "/about" },
-    { name: "Contact", href: "/contact" },
+    { label: "Shop", href: "/shop" },
+    { label: "Collections", href: "/collections" },
+    { label: "About", href: "/about" },
+    { label: "Contact", href: "/contact" },
   ];
 
-  const handleSearch = (e) => {
-    e.preventDefault();
+  /* =========================================
+     SCROLL EFFECT
+  ========================================= */
 
-    if (!searchQuery.trim()) return;
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 35);
+    };
 
-    navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+    handleScroll();
 
+    window.addEventListener("scroll", handleScroll, {
+      passive: true,
+    });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  /* =========================================
+     ROUTE CHANGE
+  ========================================= */
+
+  useEffect(() => {
+    setMenuOpen(false);
     setSearchOpen(false);
+  }, [location.pathname]);
+
+  /* =========================================
+     ESCAPE KEY
+  ========================================= */
+
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        setSearchOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
+  /* =========================================
+     BODY SCROLL LOCK
+  ========================================= */
+
+  useEffect(() => {
+    if (!menuOpen) {
+      document.body.style.overflow = "";
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [menuOpen]);
+
+  /* =========================================
+     SEARCH
+  ========================================= */
+
+  const handleSearch = (event) => {
+    event.preventDefault();
+
+    const query = searchQuery.trim();
+
+    if (!query) return;
+
+    navigate(`/shop?search=${encodeURIComponent(query)}`);
+
     setSearchQuery("");
-    setIsMenuOpen(false);
+    setSearchOpen(false);
+    setMenuOpen(false);
+  };
+
+  /* =========================================
+     ACTIVE LINK
+  ========================================= */
+
+  const isActive = (href) => {
+    if (href === "/") {
+      return location.pathname === "/";
+    }
+
+    return (
+      location.pathname === href ||
+      location.pathname.startsWith(`${href}/`)
+    );
+  };
+
+  /* =========================================
+     MOBILE NAVIGATION
+  ========================================= */
+
+  const closeMenu = () => {
+    setMenuOpen(false);
+    setSearchOpen(false);
+  };
+
+  const goTo = (path) => {
+    closeMenu();
+    navigate(path);
   };
 
   return (
-    <header className="w-full bg-[#faf8f3] text-[#2c211b]">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
-        {/* ================= LOGO + BRAND ================= */}
-        <div className="flex min-w-0 items-center">
-          <Link to="/" className="shrink-0">
-            <img
-              src="/assets/logo.png"
-              alt="YAMA FLYS"
-              className="h-14 w-auto sm:h-16 lg:h-20"
-            />
-          </Link>
+    <header
+      className={`
+        fixed
+        left-0
+        top-0
+        z-[100]
+        w-full
+        px-2
+        transition-all
+        duration-500
+        sm:px-4
+        lg:px-7
+        ${scrolled ? "pt-2" : "pt-2.5 sm:pt-3"}
+      `}
+    >
+      <div
+        className={`
+          mx-auto
+          w-full
+          max-w-[1440px]
+          overflow-hidden
+          border
+          border-[#eadbdd]
+          bg-[#fffaf8]/95
+          backdrop-blur-2xl
+          transition-all
+          duration-500
+          ${
+            scrolled
+              ? "rounded-[18px] shadow-[0_10px_35px_rgba(75,43,52,0.14)]"
+              : "rounded-[20px] shadow-[0_12px_45px_rgba(75,43,52,0.09)] sm:rounded-[26px]"
+          }
+        `}
+      >
+        {/* =========================================
+            ANNOUNCEMENT BAR
+        ========================================== */}
+
+        <div
+          className="
+            flex
+            min-h-[29px]
+            items-center
+            justify-center
+            gap-1.5
+            bg-[#f5e1e5]
+            px-3
+            py-1.5
+            text-center
+            sm:gap-2
+            sm:px-4
+          "
+        >
+          <Sparkles
+            size={10}
+            strokeWidth={1.5}
+            className="shrink-0 text-[#a56b79]"
+          />
+
+          <p
+            className="
+              text-[7px]
+              font-medium
+              uppercase
+              tracking-[0.12em]
+              text-[#704953]
+              sm:text-[9px]
+              sm:tracking-[0.17em]
+            "
+          >
+            New arrivals are here
+          </p>
+
+          <span className="text-[9px] text-[#c28b99]">
+            ♡
+          </span>
+        </div>
+
+        {/* =========================================
+            MAIN NAV
+        ========================================== */}
+
+        <div
+          className="
+            relative
+            flex
+            min-h-[62px]
+            items-center
+            px-2
+            py-2
+            sm:min-h-[72px]
+            sm:px-5
+            lg:min-h-[76px]
+            lg:px-7
+          "
+        >
+          {/* =======================================
+              DESKTOP NAV
+          ======================================== */}
+
+          <nav className="hidden items-center gap-1 lg:flex">
+            <Link
+              to="/"
+              className={`
+                rounded-full
+                px-4
+                py-2.5
+                text-[10px]
+                font-medium
+                uppercase
+                tracking-[0.13em]
+                transition-all
+                duration-300
+                ${
+                  isActive("/")
+                    ? "bg-[#493238] text-white"
+                    : "text-[#493238] hover:bg-[#f7eceb]"
+                }
+              `}
+            >
+              Home
+            </Link>
+
+            {navLinks.map((item) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={`
+                  rounded-full
+                  px-4
+                  py-2.5
+                  text-[10px]
+                  font-medium
+                  uppercase
+                  tracking-[0.13em]
+                  transition-all
+                  duration-300
+                  ${
+                    isActive(item.href)
+                      ? "bg-[#493238] text-white"
+                      : "text-[#493238] hover:bg-[#f7eceb]"
+                  }
+                `}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* =======================================
+              MOBILE LEFT - MENU
+          ======================================== */}
+
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen((value) => !value);
+              setSearchOpen(false);
+            }}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            className="
+              flex
+              h-10
+              w-10
+              shrink-0
+              items-center
+              justify-center
+              rounded-full
+              bg-[#f7eceb]
+              text-[#493238]
+              transition-all
+              duration-300
+              hover:bg-[#f1dfe1]
+              lg:hidden
+            "
+          >
+            {menuOpen ? (
+              <X size={19} strokeWidth={1.7} />
+            ) : (
+              <Menu size={19} strokeWidth={1.7} />
+            )}
+          </button>
+
+          {/* =======================================
+              LOGO
+          ======================================== */}
 
           <Link
             to="/"
-            className="ml-2 hidden min-[400px]:block sm:ml-3 lg:ml-5"
+            className="
+              absolute
+              left-1/2
+              top-1/2
+              -translate-x-1/2
+              -translate-y-1/2
+              text-center
+            "
           >
-            <h1 className="font-serif text-lg tracking-[0.12em] sm:text-xl lg:text-3xl">
-              YAMA FLAYS
-            </h1>
+            <div
+              className="
+                relative
+                whitespace-nowrap
+                font-serif
+                text-[18px]
+                font-semibold
+                tracking-[0.07em]
+                text-[#493238]
+                transition-transform
+                duration-300
+                hover:-rotate-1
+                sm:text-[24px]
+                sm:tracking-[0.11em]
+              "
+            >
+              YAMA FLYS
 
-            <p className="mt-1 hidden font-serif text-xs tracking-wide text-[#6B4F3A] sm:block lg:mt-3 lg:text-sm">
-              Elegant bangles, made for every moment.
+              <span
+                className="
+                  absolute
+                  -right-3
+                  -top-2
+                  text-[9px]
+                  text-[#c59b54]
+                  sm:-right-4
+                  sm:-top-2
+                  sm:text-[11px]
+                "
+              >
+                ✦
+              </span>
+            </div>
+
+            <p
+              className="
+                mt-0.5
+                whitespace-nowrap
+                text-[4.5px]
+                font-medium
+                uppercase
+                tracking-[0.27em]
+                text-[#a56b79]
+                sm:text-[6.5px]
+                sm:tracking-[0.35em]
+              "
+            >
+              Pretty Things • Happy You
             </p>
           </Link>
-        </div>
 
-        {/* ================= DESKTOP NAVIGATION ================= */}
-        <div className="hidden items-center gap-5 xl:gap-8 lg:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.href}
-              className="relative whitespace-nowrap text-sm font-serif transition-colors duration-300 hover:text-[#a4774d] hover:underline underline-offset-8"
-            >
-              {link.name}
-            </Link>
-          ))}
-        </div>
+          {/* =======================================
+              DESKTOP RIGHT ACTIONS
+          ======================================== */}
 
-        {/* ================= DESKTOP ACTIONS ================= */}
-        <div className="hidden items-center gap-4 lg:flex">
-          {/* Search */}
-          <button
-            type="button"
-            aria-label="Search"
-            onClick={() => setSearchOpen(!searchOpen)}
-            className="transition-transform duration-300 hover:scale-110"
-          >
-            <Search size={20} strokeWidth={1.7} />
-          </button>
+          <div className="ml-auto hidden items-center gap-1 lg:flex">
+            {/* SEARCH */}
 
-          {/* Account */}
-          <Link to="/login">
-            <User size={20} strokeWidth={1.5} />
-          </Link>
-
-          {/* Wishlist */}
-          <Link
-            to="/wishlist"
-            aria-label="Wishlist"
-            className="relative transition-transform duration-300 hover:scale-110"
-          >
-            <Heart size={20} strokeWidth={1.7} />
-
-            {wishlistCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#2c211b] text-[9px] text-white">
-                {wishlistCount}
-              </span>
-            )}
-          </Link>
-
-          {/* Cart */}
-          <Link
-            to="/cart"
-            aria-label="Shopping Bag"
-            className="relative transition-transform duration-300 hover:scale-110"
-          >
-            <ShoppingBag size={20} strokeWidth={1.7} />
-
-            {cartCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#2c211b] text-[9px] text-white">
-                {cartCount}
-              </span>
-            )}
-          </Link>
-        </div>
-
-        {/* ================= MOBILE MENU BUTTON ================= */}
-        <button
-          type="button"
-          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="flex h-10 w-10 items-center justify-center lg:hidden"
-        >
-          {isMenuOpen ? (
-            <X size={25} strokeWidth={1.7} />
-          ) : (
-            <Menu size={25} strokeWidth={1.7} />
-          )}
-        </button>
-      </nav>
-
-      {/* ================= SEARCH BOX ================= */}
-      {searchOpen && (
-        <div className="border-t border-[#e7e0d7] bg-[#faf8f3] px-4 py-4 sm:px-6">
-          <form
-            onSubmit={handleSearch}
-            className="mx-auto flex max-w-2xl items-center border-b border-[#2c211b]"
-          >
-            <Search
-              size={19}
-              strokeWidth={1.5}
-              className="mr-3 shrink-0 text-[#8c7b6d]"
-            />
-
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search bangles..."
-              autoFocus
-              className="w-full bg-transparent py-3 text-sm text-[#2c211b] outline-none placeholder:text-[#9a8b7e]"
-            />
-          </form>
-        </div>
-      )}
-
-      {/* ================= MOBILE MENU ================= */}
-      {isMenuOpen && (
-        <div className="border-t border-[#e7e0d7] bg-[#faf8f3] px-5 pb-6 lg:hidden">
-          {/* Mobile Navigation */}
-          <div className="flex flex-col">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.href}
-                onClick={() => setIsMenuOpen(false)}
-                className="border-b border-[#e7e0d7] py-4 text-sm font-medium transition-colors duration-300 hover:text-[#a4774d]"
-              >
-                {link.name}
-              </Link>
-            ))}
-          </div>
-
-          {/* Mobile Actions */}
-          <div className="flex items-center gap-6 pt-5">
-            {/* Search */}
             <button
               type="button"
-              aria-label="Search"
               onClick={() => {
-                setSearchOpen(!searchOpen);
-                setIsMenuOpen(false);
+                setSearchOpen((value) => !value);
+                setMenuOpen(false);
               }}
+              aria-label="Search"
+              className="
+                flex
+                h-10
+                items-center
+                gap-2
+                rounded-full
+                px-3
+                text-[#493238]
+                transition-all
+                duration-300
+                hover:bg-[#f7eceb]
+                hover:text-[#a56b79]
+              "
             >
-              <Search size={20} strokeWidth={1.7} />
+              <Search size={16} strokeWidth={1.7} />
+
+              <span
+                className="
+                  text-[9px]
+                  font-medium
+                  uppercase
+                  tracking-[0.1em]
+                "
+              >
+                Search
+              </span>
             </button>
 
-            {/* Account */}
-            <button type="button" aria-label="Account">
-              <UserRound size={20} strokeWidth={1.7} />
+            {/* ACCOUNT */}
+
+            <button
+              type="button"
+              onClick={() => navigate("/login")}
+              aria-label="Account"
+              className="
+                flex
+                h-10
+                w-10
+                items-center
+                justify-center
+                rounded-full
+                text-[#493238]
+                transition-all
+                duration-300
+                hover:bg-[#f7eceb]
+                hover:text-[#a56b79]
+              "
+            >
+              <UserRound size={17} strokeWidth={1.7} />
             </button>
 
-            {/* Wishlist */}
-            <Link
-              to="/wishlist"
-              onClick={() => setIsMenuOpen(false)}
+            {/* WISHLIST */}
+
+            <button
+              type="button"
+              onClick={() => navigate("/wishlist")}
               aria-label="Wishlist"
-              className="relative"
+              className="
+                relative
+                flex
+                h-10
+                w-10
+                items-center
+                justify-center
+                rounded-full
+                text-[#493238]
+                transition-all
+                duration-300
+                hover:bg-[#f7eceb]
+                hover:text-[#a56b79]
+              "
             >
-              <Heart size={20} strokeWidth={1.7} />
+              <Heart size={17} strokeWidth={1.7} />
 
               {wishlistCount > 0 && (
-                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#2c211b] text-[9px] text-white">
+                <span
+                  className="
+                    absolute
+                    right-0
+                    top-0
+                    flex
+                    h-[16px]
+                    min-w-[16px]
+                    items-center
+                    justify-center
+                    rounded-full
+                    bg-[#b97888]
+                    px-1
+                    text-[8px]
+                    font-semibold
+                    text-white
+                  "
+                >
                   {wishlistCount}
                 </span>
               )}
-            </Link>
+            </button>
 
-            {/* Shopping Bag */}
-            <Link
-              to="/cart"
-              onClick={() => setIsMenuOpen(false)}
-              aria-label="Shopping Bag"
-              className="relative"
+            {/* BAG */}
+
+            <button
+              type="button"
+              onClick={() => navigate("/cart")}
+              aria-label="Shopping bag"
+              className="
+                relative
+                flex
+                h-10
+                items-center
+                gap-2
+                rounded-full
+                bg-[#493238]
+                px-4
+                text-white
+                transition-all
+                duration-300
+                hover:-translate-y-0.5
+                hover:bg-[#5b3e45]
+              "
             >
-              <ShoppingBag size={20} strokeWidth={1.7} />
+              <ShoppingBag size={16} strokeWidth={1.7} />
+
+              <span
+                className="
+                  text-[9px]
+                  font-medium
+                  uppercase
+                  tracking-[0.12em]
+                "
+              >
+                Bag
+              </span>
 
               {cartCount > 0 && (
-                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#2c211b] text-[9px] text-white">
+                <span
+                  className="
+                    flex
+                    h-[16px]
+                    min-w-[16px]
+                    items-center
+                    justify-center
+                    rounded-full
+                    bg-[#e9c3ca]
+                    px-1
+                    text-[8px]
+                    font-semibold
+                    text-[#493238]
+                  "
+                >
                   {cartCount}
                 </span>
               )}
-            </Link>
+            </button>
+          </div>
+
+          {/* =======================================
+              MOBILE BAG
+          ======================================== */}
+
+          <button
+            type="button"
+            onClick={() => navigate("/cart")}
+            aria-label="Shopping bag"
+            className="
+              relative
+              ml-auto
+              flex
+              h-10
+              w-10
+              shrink-0
+              items-center
+              justify-center
+              rounded-full
+              bg-[#493238]
+              text-white
+              transition-all
+              duration-300
+              hover:bg-[#5b3e45]
+              lg:hidden
+            "
+          >
+            <ShoppingBag size={17} strokeWidth={1.7} />
+
+            {cartCount > 0 && (
+              <span
+                className="
+                  absolute
+                  -right-0.5
+                  -top-0.5
+                  flex
+                  h-[16px]
+                  min-w-[16px]
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-[#e9c3ca]
+                  px-1
+                  text-[8px]
+                  font-semibold
+                  text-[#493238]
+                "
+              >
+                {cartCount}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* =========================================
+            SEARCH PANEL
+        ========================================== */}
+
+        <div
+          className={`
+            overflow-hidden
+            transition-all
+            duration-500
+            ${
+              searchOpen
+                ? "max-h-[120px] border-t border-[#eadbdd]"
+                : "max-h-0"
+            }
+          `}
+        >
+          <form
+            onSubmit={handleSearch}
+            className="px-3 py-3 sm:px-7 sm:py-4"
+          >
+            <div
+              className="
+                mx-auto
+                flex
+                max-w-2xl
+                items-center
+                gap-2
+                rounded-full
+                border
+                border-[#e3d2d5]
+                bg-white
+                px-3
+                py-1.5
+                shadow-sm
+                sm:px-4
+                sm:py-2
+              "
+            >
+              <Search
+                size={15}
+                strokeWidth={1.5}
+                className="shrink-0 text-[#aa7b85]"
+              />
+
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(event) =>
+                  setSearchQuery(event.target.value)
+                }
+                placeholder="Search bangles, collections..."
+                aria-label="Search products"
+                autoFocus={searchOpen}
+                className="
+                  min-w-0
+                  flex-1
+                  bg-transparent
+                  px-1
+                  py-2
+                  text-[13px]
+                  text-[#493238]
+                  outline-none
+                  placeholder:text-[#b9a8ad]
+                  sm:text-sm
+                "
+              />
+
+              <button
+                type="submit"
+                className="
+                  shrink-0
+                  rounded-full
+                  bg-[#493238]
+                  px-3.5
+                  py-2
+                  text-[7px]
+                  font-medium
+                  uppercase
+                  tracking-[0.14em]
+                  text-white
+                  transition-all
+                  duration-300
+                  hover:bg-[#5b3e45]
+                  sm:px-4
+                  sm:text-[8px]
+                "
+              >
+                Search
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* =========================================
+            MOBILE MENU
+        ========================================== */}
+
+        <div
+          className={`
+            overflow-hidden
+            transition-all
+            duration-500
+            lg:hidden
+            ${
+              menuOpen
+                ? "max-h-[calc(100vh-95px)] border-t border-[#eadbdd]"
+                : "max-h-0"
+            }
+          `}
+        >
+          <div
+            className="
+              max-h-[calc(100vh-95px)]
+              overflow-y-auto
+              bg-[#fffaf8]
+              px-3
+              pb-5
+              pt-3
+              sm:px-6
+              sm:pb-6
+              sm:pt-4
+            "
+          >
+            {/* SEARCH */}
+
+            <form onSubmit={handleSearch} className="mb-3">
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-2
+                  rounded-2xl
+                  border
+                  border-[#eadbdd]
+                  bg-white
+                  px-3
+                  py-2
+                "
+              >
+                <Search
+                  size={16}
+                  className="shrink-0 text-[#a56b79]"
+                />
+
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(event) =>
+                    setSearchQuery(event.target.value)
+                  }
+                  placeholder="Search bangles..."
+                  aria-label="Search products"
+                  className="
+                    min-w-0
+                    flex-1
+                    bg-transparent
+                    py-2
+                    text-sm
+                    text-[#493238]
+                    outline-none
+                    placeholder:text-[#b9a8ad]
+                  "
+                />
+
+                <button
+                  type="submit"
+                  className="
+                    rounded-xl
+                    bg-[#493238]
+                    px-3
+                    py-2
+                    text-[8px]
+                    font-medium
+                    uppercase
+                    tracking-[0.1em]
+                    text-white
+                  "
+                >
+                  Search
+                </button>
+              </div>
+            </form>
+
+            {/* NAV LINKS */}
+
+            <div className="space-y-1.5">
+              <Link
+                to="/"
+                onClick={closeMenu}
+                className={`
+                  flex
+                  min-h-[52px]
+                  items-center
+                  justify-between
+                  rounded-2xl
+                  px-4
+                  py-3
+                  transition-all
+                  duration-300
+                  ${
+                    isActive("/")
+                      ? "bg-[#f5e1e5]"
+                      : "hover:bg-[#faf0ef]"
+                  }
+                `}
+              >
+                <span className="font-serif text-lg text-[#493238]">
+                  Home
+                </span>
+
+                <ArrowRight
+                  size={16}
+                  className="text-[#b37b88]"
+                />
+              </Link>
+
+              {navLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  onClick={closeMenu}
+                  className={`
+                    flex
+                    min-h-[52px]
+                    items-center
+                    justify-between
+                    rounded-2xl
+                    px-4
+                    py-3
+                    transition-all
+                    duration-300
+                    ${
+                      isActive(item.href)
+                        ? "bg-[#f5e1e5]"
+                        : "hover:bg-[#faf0ef]"
+                    }
+                  `}
+                >
+                  <span className="font-serif text-lg text-[#493238]">
+                    {item.label}
+                  </span>
+
+                  <ArrowRight
+                    size={16}
+                    className="text-[#b37b88]"
+                  />
+                </Link>
+              ))}
+            </div>
+
+            {/* ACCOUNT / WISHLIST */}
+
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => goTo("/login")}
+                className="
+                  flex
+                  min-h-[50px]
+                  items-center
+                  justify-center
+                  gap-2
+                  rounded-2xl
+                  border
+                  border-[#eadbdd]
+                  bg-white
+                  px-3
+                  py-3
+                  text-[8px]
+                  font-medium
+                  uppercase
+                  tracking-[0.1em]
+                  text-[#493238]
+                  transition-all
+                  hover:bg-[#faf0ef]
+                "
+              >
+                <UserRound size={15} />
+                Account
+              </button>
+
+              <button
+                type="button"
+                onClick={() => goTo("/wishlist")}
+                className="
+                  flex
+                  min-h-[50px]
+                  items-center
+                  justify-center
+                  gap-2
+                  rounded-2xl
+                  border
+                  border-[#eadbdd]
+                  bg-white
+                  px-3
+                  py-3
+                  text-[8px]
+                  font-medium
+                  uppercase
+                  tracking-[0.1em]
+                  text-[#493238]
+                  transition-all
+                  hover:bg-[#faf0ef]
+                "
+              >
+                <Heart size={15} />
+
+                Wishlist
+
+                {wishlistCount > 0 && (
+                  <span className="text-[#b97888]">
+                    ({wishlistCount})
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {/* BRAND MESSAGE */}
+
+            <div
+              className="
+                mt-3
+                rounded-[18px]
+                bg-[#f5e1e5]
+                px-4
+                py-4
+                text-center
+              "
+            >
+              <Sparkles
+                size={15}
+                className="mx-auto text-[#b47784]"
+              />
+
+              <p className="mt-2 font-serif text-lg text-[#704953]">
+                A little sparkle,
+                <br />
+                just for you.
+              </p>
+
+              <p
+                className="
+                  mt-2
+                  text-[7px]
+                  uppercase
+                  tracking-[0.18em]
+                  text-[#a56b79]
+                "
+              >
+                YAMA FLYS
+              </p>
+            </div>
           </div>
         </div>
-      )}
+      </div>
     </header>
   );
 };
