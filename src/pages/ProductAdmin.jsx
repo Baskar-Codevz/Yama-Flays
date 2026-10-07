@@ -285,9 +285,9 @@
             stock: size.stock === "" ? 0 : Number(size.stock),
           })),
 
-        bestseller: Boolean(formData.bestseller),
+        isBestSeller: Boolean(formData.bestseller),
 
-        featured: Boolean(formData.featured),
+        isFeatured: Boolean(formData.featured),
 
         isActive: Boolean(formData.isActive),
       };
