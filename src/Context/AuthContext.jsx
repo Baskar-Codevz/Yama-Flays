@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 const AuthContext = createContext(null);
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = "https://yama-flays-backend.onrender.com";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);

@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { useWishlist } from "../Context/WishlistContext";
 import { getProducts } from "../services/productApi";
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = "https://yama-flays-backend.onrender.com";
 
 const BestSellers = () => {
   const { toggleWishlist, isInWishlist } = useWishlist();

@@ -4,7 +4,7 @@ import { Heart, ArrowUpRight, Star, Sparkles } from "lucide-react";
 
 import { useWishlist } from "../Context/WishlistContext";
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = "https://yama-flays-backend.onrender.com";
 
 /* =========================================================
    PRODUCT IMAGE URL

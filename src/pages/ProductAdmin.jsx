@@ -25,7 +25,7 @@ import {
   deleteProduct,
 } from "../services/productApi";
 
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = "https://yama-flays-backend.onrender.com";
 
 const ProductAdmin = () => {
   /* =========================================================

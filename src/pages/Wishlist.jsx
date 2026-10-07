@@ -19,7 +19,7 @@ import ScrollReveal from "../components/ScrollReveal";
 const FALLBACK_IMAGE = "/assets/img-1.webp";
 
 // Backend URL
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = "https://yama-flays-backend.onrender.com";
 
 const Wishlist = () => {
   const { wishlistItems, removeFromWishlist } = useWishlist();

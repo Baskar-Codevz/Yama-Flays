@@ -18,7 +18,7 @@ import { getProductById } from "../services/productApi";
 import { useWishlist } from "../Context/WishlistContext";
 import { useCart } from "../Context/CartContext";
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = "https://yama-flays-backend.onrender.com";
 
 const ProductDetails = () => {
   const { id } = useParams();

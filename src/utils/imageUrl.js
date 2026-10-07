@@ -12,12 +12,13 @@ export const getImageUrl = (image) => {
   if (!value) {
     return FALLBACK_IMAGE;
   }
-
-  // Already a backend URL
+  // Already Backend Url
   if (value.startsWith("http://localhost:5000/")) {
-    return value;
-  }
-
+  return value.replace(
+    "http://localhost:5000",
+    BACKEND_URL
+  );
+}
   // Any complete HTTP/HTTPS URL
   if (value.startsWith("http://") || value.startsWith("https://")) {
     return value;
