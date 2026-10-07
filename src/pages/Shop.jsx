@@ -54,44 +54,58 @@ const Shop = () => {
   /* =========================================================
      CATEGORIES
   ========================================================= */
-
-  const jewelleryCategories = [
-    {
-      name: "All",
-      description: "Everything beautiful",
-      icon: Gem,
-    },
-    {
-      name: "Bangles",
-      description: "Elegant everyday sparkle",
-      icon: Gem,
-    },
-    {
-      name: "Rings",
-      description: "Small details, big style",
-      icon: Crown,
-    },
-    {
-      name: "Earrings",
-      description: "Made to catch attention",
-      icon: Sparkles,
-    },
-    {
-      name: "Necklaces",
-      description: "Grace around your neck",
-      icon: Heart,
-    },
-    {
-      name: "Bracelets",
-      description: "Perfect wrist details",
-      icon: Layers3,
-    },
-    {
-      name: "Jewellery Sets",
-      description: "Complete the look",
-      icon: Star,
-    },
-  ];
+         const jewelleryCategories = [
+  {
+    name: "All",
+    description: "Everything beautiful",
+    icon: Gem,
+  },
+  {
+    name: "Gold",
+    description: "Elegant gold jewellery",
+    icon: Gem,
+  },
+  {
+    name: "Silver",
+    description: "Classic silver jewellery",
+    icon: Crown,
+  },
+  {
+    name: "Bridal",
+    description: "Made for special moments",
+    icon: Sparkles,
+  },
+  {
+    name: "Designer",
+    description: "Statement jewellery",
+    icon: Heart,
+  },
+  {
+    name: "Traditional",
+    description: "Timeless traditional style",
+    icon: Layers3,
+  },
+  {
+    name: "Daily Wear",
+    description: "Elegant everyday sparkle",
+    icon: Star,
+  },
+  {
+    name: "Stone",
+    description: "Beautiful stone designs",
+    icon: Gem,
+  },
+  {
+    name: "Pearl",
+    description: "Classic pearl elegance",
+    icon: Crown,
+  },
+  {
+    name: "Festive",
+    description: "Celebrate in sparkle",
+    icon: Sparkles,
+  },
+];
 
   /* =========================================================
      COLLECTIONS
@@ -224,11 +238,27 @@ const Shop = () => {
      COLLECTION MATCH
   ========================================================= */
 
-  const productCollectionMatches = (product, collection) => {
-    return (
-      getProductCollection(product) === String(collection).trim().toLowerCase()
-    );
-  };
+ const productCollectionMatches = (product, collection) => {
+  const productCollection = getProductCollection(product);
+  const selectedCollection = String(collection).trim().toLowerCase();
+
+  if (!productCollection || !selectedCollection) {
+    return false;
+  }
+
+  if (productCollection === selectedCollection) {
+    return true;
+  }
+
+  if (
+    productCollection === `${selectedCollection} collection` ||
+    selectedCollection === `${productCollection} collection`
+  ) {
+    return true;
+  }
+
+  return false;
+};
 
   /* =========================================================
      FILTER + SORT PRODUCTS
@@ -258,14 +288,19 @@ const Shop = () => {
     /* -------------------------------------------------------
        CATEGORY
     ------------------------------------------------------- */
-
     if (selectedCategory !== "All") {
-      const category = selectedCategory.trim().toLowerCase();
+  const category = selectedCategory.trim().toLowerCase();
 
-      filtered = filtered.filter(
-        (product) => getProductCategory(product) === category,
-      );
-    }
+  filtered = filtered.filter((product) => {
+    const productCategory = getProductCategory(product);
+
+    return (
+      productCategory === category ||
+      productCategory === `${category} jewellery` ||
+      productCategory === `${category} jewelry`
+    );
+  });
+}
 
     /* -------------------------------------------------------
        COLLECTION
@@ -295,7 +330,7 @@ const Shop = () => {
 
         /* NORMAL COLLECTION */
 
-        return getProductCollection(product) === collection;
+        return productCollectionMatches(product, collection);
       });
     }
 
