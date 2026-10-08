@@ -377,7 +377,7 @@ const About = () => {
                   <div className="relative overflow-hidden rounded-[2rem] border border-white/15 bg-[#211329] p-3 shadow-[0_30px_80px_rgba(0,0,0,0.30)]">
                     <div className="relative overflow-hidden rounded-[1.5rem]">
                       <img
-                        src="/assets/img-1.webp"
+                        src="/assets/client-image1.jpeg"
                         alt="YAMA FLYS bangle collection"
                         className="aspect-[4/5] w-full object-cover transition-transform duration-[1600ms] ease-out hover:scale-110"
                       />

@@ -5,32 +5,32 @@ import { Link } from "react-router-dom";
 const categories = [
   {
     name: "New Launch",
-    image: "/assets/img-1.webp",
+    image: "/assets/client-image1.jpeg",
     label: "Latest Styles",
   },
   {
     name: "Top Selling",
-    image: "/assets/img-2.webp",
+    image: "/assets/Top-sell.jpeg",
     label: "Customer Favourites",
   },
   {
     name: "Festival Collection",
-    image: "/assets/img-3.webp",
+    image: "/assets/client-image4.jpeg",
     label: "Festive Edit",
   },
   {
     name: "Wedding Collection",
-    image: "/assets/img-4.webp",
+    image: "/assets/festive.jpeg",
     label: "Bridal Edit",
   },
   {
     name: "Jewellery Collection",
-    image: "/assets/img-5.webp",
+    image: "/assets/client-image6.jpeg",
     label: "Statement Pieces",
   },
   {
     name: "Other Products",
-    image: "/assets/img-6.webp",
+    image: "/assets/client-image5.jpeg",
     label: "Explore More",
   },
 ];

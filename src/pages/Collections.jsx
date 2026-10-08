@@ -12,42 +12,42 @@ const collections = [
   {
     id: 1,
     name: "New Launch",
-    image: "/assets/img-15.jpeg",
+    image: "/assets/new2.jpeg",
     description:
       "Discover the latest additions and newly introduced designs from YAMA FLYS.",
   },
   {
     id: 2,
     name: "Top Selling",
-    image: "/assets/img-16.jpeg",
+    image: "/assets/new1.jpeg",
     description:
       "Explore designs that customers are choosing across different occasions.",
   },
   {
     id: 3,
     name: "Festival Collection",
-    image: "/assets/img-18.jpeg",
+    image: "/assets/Top-sell.jpeg",
     description:
       "Elegant styles created for celebrations, festive moments, and gatherings.",
   },
   {
     id: 4,
     name: "Wedding Collection",
-    image: "/assets/img-23.jpeg",
+    image: "/assets/festive.jpeg",
     description:
       "Bangle styles selected for weddings, bridal occasions, and memorable moments.",
   },
   {
     id: 5,
     name: "Jewellery Collection",
-    image: "/assets/img-20.jpeg",
+    image: "/assets/client-image6.jpeg",
     description:
       "Refined jewellery-inspired styles designed to complement your look.",
   },
   {
     id: 6,
     name: "Other Products",
-    image: "/assets/img-27.jpeg",
+    image: "/assets/client-image5.jpeg",
     description:
       "Browse additional products and future additions available from YAMA FLYS.",
   },

@@ -61,16 +61,6 @@ const Shop = () => {
     icon: Gem,
   },
   {
-    name: "Gold",
-    description: "Elegant gold jewellery",
-    icon: Gem,
-  },
-  {
-    name: "Silver",
-    description: "Classic silver jewellery",
-    icon: Crown,
-  },
-  {
     name: "Bridal",
     description: "Made for special moments",
     icon: Sparkles,

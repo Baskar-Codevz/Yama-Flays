@@ -831,10 +831,6 @@
                   >
                     <option value="">Select Category</option>
 
-                    <option value="Gold">Gold</option>
-
-                    <option value="Silver">Silver</option>
-
                     <option value="Bridal">Bridal</option>
 
                     <option value="Designer">Designer</option>
