@@ -10,7 +10,7 @@ const BACKEND_URL = "https://yama-flays-backend.onrender.com";
    PRODUCT IMAGE URL
 ========================================================= */
 
-const getImageUrl = (image) => {
+    const getImageUrl = (image) => {
   if (!image) {
     return "/assets/img-1.webp";
   }
@@ -59,8 +59,8 @@ const ProductCard = ({ product }) => {
      PRODUCT DATA
   ========================================================= */
 
-  const productImage = getImageUrl(product.image || product.images?.[0]);
-
+      const productImage = getImageUrl(product.images?.[0] || product.image);
+        
   const productName = product.name || "Beautiful Jewellery";
 
   const category = product.category || "Jewellery";
