@@ -1,96 +1,43 @@
+
 import express from "express";
 import multer from "multer";
-import path from "path";
-import fs from "fs";
 
+import cloudinary from "../config/cloudinary.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { adminOnly } from "../middleware/adminMiddleware.js";
 
 const router = express.Router();
 
-/* =========================================================
-   UPLOAD DIRECTORY
-========================================================= */
-
-const uploadDir = "uploads";
-
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-/* =========================================================
-   STORAGE
-========================================================= */
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-
-  filename: (req, file, cb) => {
-    const extension = path.extname(file.originalname).toLowerCase();
-
-    const uniqueName = `${Date.now()}-${Math.round(
-      Math.random() * 1e9,
-    )}${extension}`;
-
-    cb(null, uniqueName);
-  },
-});
-
-/* =========================================================
-   FILE FILTER
-========================================================= */
-
-const fileFilter = (req, file, cb) => {
-  const allowedExtensions = /\.(jpg|jpeg|png|webp)$/i;
-
-  const allowedMimeTypes = [
-    "image/jpeg",
-    "image/jpg",
-    "image/png",
-    "image/webp",
-  ];
-
-  const extensionValid = allowedExtensions.test(file.originalname);
-  const mimeValid = allowedMimeTypes.includes(file.mimetype);
-
-  if (extensionValid && mimeValid) {
-    cb(null, true);
-  } else {
-    cb(
-      new Error("Only JPG, JPEG, PNG and WEBP images are allowed"),
-      false,
-    );
-  }
-};
-
-/* =========================================================
-   MULTER
-========================================================= */
+const allowedMimeTypes = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+];
 
 const upload = multer({
-  storage,
-  fileFilter,
-
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024,
   },
+  fileFilter: (req, file, cb) => {
+    if (allowedMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(
+        new Error("Only JPG, JPEG, PNG and WEBP images are allowed"),
+      );
+    }
+  },
 });
 
-/* =========================================================
-   POST /api/upload
-   ADMIN ONLY
-========================================================= */
-
-router.post(
-  "/",
-  protect,
-  adminOnly,
-  (req, res, next) => {
-    upload.single("image")(req, res, (error) => {
+router.post("/", protect, adminOnly, (req, res, next) => {
+  upload.single("image")(req, res, async (error) => {
+    try {
       if (error) {
-        return next(error);
+        return res.status(400).json({
+          success: false,
+          message: error.message,
+        });
       }
 
       if (!req.file) {
@@ -100,16 +47,34 @@ router.post(
         });
       }
 
-      const imageUrl = `/uploads/${req.file.filename}`;
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "yama-flys/products",
+            resource_type: "image",
+          },
+          (uploadError, uploadedImage) => {
+            if (uploadError) {
+              reject(uploadError);
+            } else {
+              resolve(uploadedImage);
+            }
+          },
+        );
+
+        stream.end(req.file.buffer);
+      });
 
       return res.status(201).json({
         success: true,
         message: "Image uploaded successfully",
-        imageUrl,
-        filename: req.file.filename,
+        imageUrl: result.secure_url,
+        publicId: result.public_id,
       });
-    });
-  },
-);
+    } catch (uploadError) {
+      return next(uploadError);
+    }
+  });
+});
 
 export default router;
