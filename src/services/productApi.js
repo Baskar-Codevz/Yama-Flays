@@ -1,6 +1,5 @@
 const API_URL = "https://yama-flays-backend.onrender.com/api/products";
 const UPLOAD_URL = "https://yama-flays-backend.onrender.com/api/upload";
-
 /* =========================================================
    GET TOKEN
 ========================================================= */

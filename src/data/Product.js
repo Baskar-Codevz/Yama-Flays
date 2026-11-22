@@ -1,24 +1,23 @@
+
 const products = [
   {
     id: 15,
     name: "Royal Bridal Bangles",
     category: "Bridal",
     collection: "Wedding Collection",
-    price: 2499,
-    originalPrice: 2999,
+    price: 496,
+    originalPrice: 999,
     discount: 17,
     rating: 4.8,
     reviews: 124,
-    image: "/assets/img-15.jpeg",
+    image: "/assets/L1.jpeg",
     bestseller: true,
-
     sizes: [
       { size: "2.2", stock: 10 },
       { size: "2.4", stock: 5 },
       { size: "2.6", stock: 0 },
       { size: "2.8", stock: 8 },
     ],
-
     description:
       "A beautiful bangle design created to complement bridal and festive looks with an elegant traditional touch.",
   },
@@ -28,21 +27,19 @@ const products = [
     name: "Classic Stone Bangles",
     category: "Stone",
     collection: "Jewellery Collection",
-    price: 1299,
-    originalPrice: 1599,
+    price: 489,
+    originalPrice: 799,
     discount: 19,
     rating: 4.7,
     reviews: 86,
-    image: "/assets/img-16.jpeg",
+    image: "/assets/L2.jpeg",
     bestseller: true,
-
     sizes: [
       { size: "2.2", stock: 6 },
       { size: "2.4", stock: 9 },
       { size: "2.6", stock: 4 },
       { size: "2.8", stock: 0 },
     ],
-
     description:
       "Elegant stone-detail bangles designed to add a graceful touch to traditional and occasion wear.",
   },
@@ -52,21 +49,19 @@ const products = [
     name: "Elegant Gold Finish Bangles",
     category: "Gold Finish",
     collection: "Jewellery Collection",
-    price: 1899,
-    originalPrice: 2299,
+    price: 499,
+    originalPrice: 999,
     discount: 17,
     rating: 4.9,
     reviews: 64,
-    image: "/assets/img-17.jpeg",
+    image: "/assets/L3.jpeg",
     bestseller: true,
-
     sizes: [
       { size: "2.2", stock: 7 },
       { size: "2.4", stock: 0 },
       { size: "2.6", stock: 6 },
       { size: "2.8", stock: 4 },
     ],
-
     description:
       "A sophisticated gold-finish bangle design that brings a refined look to festive and special occasions.",
   },
@@ -76,21 +71,19 @@ const products = [
     name: "Traditional Red Bangles",
     category: "Traditional",
     collection: "Festival Collection",
-    price: 799,
+    price: 599,
     originalPrice: 999,
     discount: 20,
     rating: 4.6,
     reviews: 48,
-    image: "/assets/img-18.jpeg",
+    image: "/assets/L4.jpeg",
     bestseller: true,
-
     sizes: [
       { size: "2.2", stock: 12 },
       { size: "2.4", stock: 8 },
       { size: "2.6", stock: 5 },
       { size: "2.8", stock: 3 },
     ],
-
     description:
       "A classic red bangle design inspired by traditional styling and suitable for festive occasions.",
   },
@@ -100,21 +93,19 @@ const products = [
     name: "Elegant Pearl Bangles",
     category: "Pearl",
     collection: "Jewellery Collection",
-    price: 1499,
-    originalPrice: 1799,
+    price: 349,
+    originalPrice: 799,
     discount: 17,
     rating: 4.8,
     reviews: 52,
-    image: "/assets/img-19.jpeg",
+    image: "/assets/L5.jpeg",
     bestseller: false,
-
     sizes: [
       { size: "2.2", stock: 5 },
       { size: "2.4", stock: 7 },
       { size: "2.6", stock: 0 },
       { size: "2.8", stock: 6 },
     ],
-
     description:
       "A delicate pearl-inspired bangle design for a graceful and elegant appearance.",
   },
@@ -124,21 +115,19 @@ const products = [
     name: "Festive Designer Bangles",
     category: "Designer",
     collection: "Festival Collection",
-    price: 1699,
-    originalPrice: 2099,
+    price: 599,
+    originalPrice: 899,
     discount: 19,
     rating: 4.7,
     reviews: 41,
-    image: "/assets/img-20.jpeg",
+    image: "/assets/L6.jpeg",
     bestseller: false,
-
     sizes: [
       { size: "2.2", stock: 4 },
       { size: "2.4", stock: 6 },
       { size: "2.6", stock: 8 },
       { size: "2.8", stock: 0 },
     ],
-
     description:
       "A stylish designer bangle created to complement festive outfits and special occasions.",
   },
@@ -153,16 +142,14 @@ const products = [
     discount: 18,
     rating: 4.6,
     reviews: 37,
-    image: "/assets/img-21.jpeg",
+    image: "/assets/L7.jpeg",
     bestseller: false,
-
     sizes: [
       { size: "2.2", stock: 8 },
       { size: "2.4", stock: 5 },
       { size: "2.6", stock: 0 },
       { size: "2.8", stock: 7 },
     ],
-
     description:
       "A classic green bangle design that adds a beautiful traditional touch to your collection.",
   },
@@ -177,16 +164,14 @@ const products = [
     discount: 18,
     rating: 4.8,
     reviews: 45,
-    image: "/assets/img-22.jpeg",
+    image: "/assets/L8.jpeg",
     bestseller: false,
-
     sizes: [
       { size: "2.2", stock: 3 },
       { size: "2.4", stock: 7 },
       { size: "2.6", stock: 5 },
       { size: "2.8", stock: 0 },
     ],
-
     description:
       "Beautiful stone-detail bangles with a golden finish, designed for elegant occasion wear.",
   },
@@ -201,16 +186,14 @@ const products = [
     discount: 18,
     rating: 4.9,
     reviews: 72,
-    image: "/assets/img-23.jpeg",
+    image: "/assets/L9.jpeg",
     bestseller: true,
-
     sizes: [
       { size: "2.2", stock: 6 },
       { size: "2.4", stock: 4 },
       { size: "2.6", stock: 9 },
       { size: "2.8", stock: 0 },
     ],
-
     description:
       "A statement bridal bangle design featuring an elegant stone-inspired look for special celebrations.",
   },
@@ -225,16 +208,14 @@ const products = [
     discount: 18,
     rating: 4.7,
     reviews: 39,
-    image: "/assets/img-24.jpeg",
+    image: "/assets/L10.jpeg",
     bestseller: false,
-
     sizes: [
       { size: "2.2", stock: 5 },
       { size: "2.4", stock: 0 },
       { size: "2.6", stock: 7 },
       { size: "2.8", stock: 4 },
     ],
-
     description:
       "A modern gold-finish bangle design combining a classic appearance with contemporary styling.",
   },
@@ -249,16 +230,14 @@ const products = [
     discount: 20,
     rating: 4.7,
     reviews: 34,
-    image: "/assets/img-25.jpeg",
+    image: "/assets/L11.jpeg",
     bestseller: false,
-
     sizes: [
       { size: "2.2", stock: 9 },
       { size: "2.4", stock: 6 },
       { size: "2.6", stock: 0 },
       { size: "2.8", stock: 5 },
     ],
-
     description:
       "A festive bangle design featuring rich red tones and elegant detailing for celebrations.",
   },
@@ -273,16 +252,14 @@ const products = [
     discount: 23,
     rating: 4.6,
     reviews: 29,
-    image: "/assets/img-26.jpeg",
+    image: "/assets/L12.jpeg",
     bestseller: false,
-
     sizes: [
       { size: "2.2", stock: 7 },
       { size: "2.4", stock: 5 },
       { size: "2.6", stock: 4 },
       { size: "2.8", stock: 0 },
     ],
-
     description:
       "A timeless traditional bangle design suitable for festive outfits and everyday styling.",
   },
@@ -297,16 +274,14 @@ const products = [
     discount: 17,
     rating: 4.8,
     reviews: 57,
-    image: "/assets/img-27.jpeg",
+    image: "/assets/L13.jpeg",
     bestseller: true,
-
     sizes: [
       { size: "2.2", stock: 4 },
       { size: "2.4", stock: 8 },
       { size: "2.6", stock: 6 },
       { size: "2.8", stock: 0 },
     ],
-
     description:
       "A premium designer-inspired bangle style created to add an elegant finishing touch to your look.",
   },

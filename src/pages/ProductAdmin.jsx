@@ -1,303 +1,275 @@
-  import React, { useEffect, useState } from "react";
-  import {
-    Plus,
-    Trash2,
-    Edit3,
-    X,
-    Upload,
-    Image as ImageIcon,
-    Package,
-    Save,
-    RefreshCw,
-    CheckCircle2,
-    AlertCircle,
-    Star,
-    Sparkles,
-    Layers3,
-    Boxes,
-  } from "lucide-react";
 
-  import {
-    createProduct,
-    uploadImage,
-    getProducts,
-    updateProduct,
-    deleteProduct,
-  } from "../services/productApi";
+import React, { useEffect, useState } from "react";
+import {
+  Plus,
+  Trash2,
+  Edit3,
+  X,
+  Upload,
+  Image as ImageIcon,
+  Package,
+  Save,
+  RefreshCw,
+  CheckCircle2,
+  AlertCircle,
+  Star,
+  Sparkles,
+  Layers3,
+  Boxes,
+} from "lucide-react";
 
-  const API_BASE_URL = "https://yama-flays-backend.onrender.com";
+import {
+  createProduct,
+  uploadImage,
+  getProducts,
+  updateProduct,
+  deleteProduct,
+} from "../services/productApi";
 
-  const ProductAdmin = () => {
-    /* =========================================================
-      INITIAL FORM
-    ========================================================= */
+const API_BASE_URL = "https://yama-flays-backend.onrender.com";
 
-    const getInitialForm = () => ({
-      name: "",
-      description: "",
-      price: "",
-      originalPrice: "",
-      category: "",
-      collection: "",
-      images: [],
-      sizes: [
-        {
-          name: "",
-          stock: "",
-        },
-      ],
-      bestseller: false,
-      featured: false,
-      isActive: true,
-    });
+const ProductAdmin = () => {
+  /* =========================================================
+     INITIAL FORM
+  ========================================================= */
 
-    /* =========================================================
-      STATE
-    ========================================================= */
+  const getInitialForm = () => ({
+    name: "",
+    description: "",
+    price: "",
+    originalPrice: "",
+    category: "",
+    collection: "",
+    images: [],
+    sizes: [{ name: "", stock: "" }],
+    bestseller: false,
+    featured: false,
+    isActive: true,
+  });
 
-    const [formData, setFormData] = useState(getInitialForm());
+  /* =========================================================
+     STATE
+  ========================================================= */
 
-    const [products, setProducts] = useState([]);
+  const [formData, setFormData] = useState(getInitialForm());
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
 
-    const [loading, setLoading] = useState(false);
-    const [productsLoading, setProductsLoading] = useState(true);
+  /* =========================================================
+     MESSAGE
+  ========================================================= */
 
-    const [editingId, setEditingId] = useState(null);
+  const showMessage = (text, type = "info") => {
+    setMessage(text);
+    setMessageType(type);
 
-    const [message, setMessage] = useState("");
-    const [messageType, setMessageType] = useState("");
+    setTimeout(() => {
+      setMessage("");
+      setMessageType("");
+    }, 4000);
+  };
 
-    /* =========================================================
-      MESSAGE
-    ========================================================= */
+  const getMessageStyle = () => {
+    if (messageType === "success") {
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    }
 
-    const showMessage = (text, type = "info") => {
-      setMessage(text);
-      setMessageType(type);
+    if (messageType === "error") {
+      return "border-red-200 bg-red-50 text-red-700";
+    }
 
-      setTimeout(() => {
-        setMessage("");
-        setMessageType("");
-      }, 4000);
-    };
+    return "border-[#D4E2D0] bg-[#EEF5E9] text-[#286844]";
+  };
 
-    /* =========================================================
-      LOAD PRODUCTS
-    ========================================================= */
+  /* =========================================================
+     LOAD PRODUCTS
+  ========================================================= */
 
-    const loadProducts = async () => {
-      try {
-        setProductsLoading(true);
+  const loadProducts = async () => {
+    try {
+      setProductsLoading(true);
 
-        const result = await getProducts();
+      const result = await getProducts();
 
-        if (Array.isArray(result)) {
-          setProducts(result);
-        } else {
-          setProducts(result?.products || []);
-        }
-      } catch (error) {
-        console.error("Failed to load products:", error);
-
-        showMessage(error?.message || "Failed to load products.", "error");
-      } finally {
-        setProductsLoading(false);
+      if (Array.isArray(result)) {
+        setProducts(result);
+      } else {
+        setProducts(result?.products || []);
       }
-    };
+    } catch (error) {
+      console.error("Failed to load products:", error);
+      showMessage(error?.message || "Failed to load products.", "error");
+    } finally {
+      setProductsLoading(false);
+    }
+  };
 
-    /* =========================================================
-      LOAD PRODUCTS ON PAGE LOAD
-    ========================================================= */
+  useEffect(() => {
+    loadProducts();
+  }, []);
 
-    useEffect(() => {
-      loadProducts();
-    }, []);
+  /* =========================================================
+     INPUT CHANGE
+  ========================================================= */
 
-    /* =========================================================
-      NORMAL INPUT CHANGE
-    ========================================================= */
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
 
-    const handleChange = (e) => {
-      const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
 
-      setFormData((prev) => ({
-        ...prev,
-        [name]: type === "checkbox" ? checked : value,
-      }));
-    };
+  /* =========================================================
+     IMAGE SELECTION
+  ========================================================= */
 
-    /* =========================================================
-      IMAGE SELECTION
-    ========================================================= */
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files || []);
 
-    const handleImageChange = (e) => {
-      const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-      if (files.length === 0) {
-        return;
-      }
+    setFormData((prev) => ({
+      ...prev,
+      images: [...prev.images, ...files],
+    }));
 
-      setFormData((prev) => ({
-        ...prev,
-        images: [...prev.images, ...files],
-      }));
+    e.target.value = "";
+  };
 
-      e.target.value = "";
-    };
+  const removeImage = (indexToRemove) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, index) => index !== indexToRemove),
+    }));
+  };
 
-    /* =========================================================
-      REMOVE IMAGE
-    ========================================================= */
+  /* =========================================================
+     SIZE MANAGEMENT
+  ========================================================= */
 
-    const removeImage = (indexToRemove) => {
-      setFormData((prev) => ({
-        ...prev,
-        images: prev.images.filter((_, index) => index !== indexToRemove),
-      }));
-    };
+  const handleSizeChange = (index, field, value) => {
+    setFormData((prev) => {
+      const updatedSizes = [...prev.sizes];
 
-    /* =========================================================
-      SIZE CHANGE
-    ========================================================= */
-
-    const handleSizeChange = (index, field, value) => {
-      setFormData((prev) => {
-        const updatedSizes = [...prev.sizes];
-
-        updatedSizes[index] = {
-          ...updatedSizes[index],
-          [field]: value,
-        };
-
-        return {
-          ...prev,
-          sizes: updatedSizes,
-        };
-      });
-    };
-
-    /* =========================================================
-      ADD SIZE
-    ========================================================= */
-
-    const addSize = () => {
-      setFormData((prev) => ({
-        ...prev,
-        sizes: [
-          ...prev.sizes,
-          {
-            name: "",
-            stock: "",
-          },
-        ],
-      }));
-    };
-
-    /* =========================================================
-      REMOVE SIZE
-    ========================================================= */
-
-    const removeSize = (indexToRemove) => {
-      setFormData((prev) => ({
-        ...prev,
-        sizes: prev.sizes.filter((_, index) => index !== indexToRemove),
-      }));
-    };
-
-    /* =========================================================
-      RESET FORM
-    ========================================================= */
-
-    const resetForm = () => {
-      setFormData(getInitialForm());
-      setEditingId(null);
-    };
-
-    /* =========================================================
-      VALIDATION
-    ========================================================= */
-
-    const validateForm = () => {
-      if (!formData.name.trim()) {
-        showMessage("Please enter a product name.", "error");
-        return false;
-      }
-
-      if (!formData.description.trim()) {
-        showMessage("Please enter a product description.", "error");
-        return false;
-      }
-
-      if (
-        formData.price === "" ||
-        Number.isNaN(Number(formData.price)) ||
-        Number(formData.price) < 0
-      ) {
-        showMessage("Please enter a valid selling price.", "error");
-        return false;
-      }
-
-      if (!formData.category) {
-        showMessage("Please select a category.", "error");
-        return false;
-      }
-
-      if (formData.originalPrice !== "") {
-        if (
-          Number.isNaN(Number(formData.originalPrice)) ||
-          Number(formData.originalPrice) < 0
-        ) {
-          showMessage("Please enter a valid original price.", "error");
-          return false;
-        }
-      }
-
-      if (formData.images.length === 0) {
-        showMessage("Please select at least one product image.", "error");
-        return false;
-      }
-
-      return true;
-    };
-
-    /* =========================================================
-      PREPARE PRODUCT DATA
-    ========================================================= */
-
-    const prepareProductData = (uploadedImages = []) => {
-      const data = {
-        name: formData.name.trim(),
-
-        description: formData.description.trim(),
-
-        price: Number(formData.price),
-
-        category: formData.category,
-
-        collectionName: formData.collection.trim(),
-
-        images: uploadedImages,
-
-        sizes: formData.sizes
-          .filter((size) => size.name && size.name.trim() !== "")
-          .map((size) => ({
-            name: size.name.trim(),
-            stock: size.stock === "" ? 0 : Number(size.stock),
-          })),
-
-        isBestSeller: Boolean(formData.bestseller),
-
-        isFeatured: Boolean(formData.featured),
-
-        isActive: Boolean(formData.isActive),
+      updatedSizes[index] = {
+        ...updatedSizes[index],
+        [field]: value,
       };
 
-      if (formData.originalPrice !== "") {
-        data.originalPrice = Number(formData.originalPrice);
-      }
+      return {
+        ...prev,
+        sizes: updatedSizes,
+      };
+    });
+  };
 
-      return data;
+  const addSize = () => {
+    setFormData((prev) => ({
+      ...prev,
+      sizes: [...prev.sizes, { name: "", stock: "" }],
+    }));
+  };
+
+  const removeSize = (indexToRemove) => {
+    setFormData((prev) => ({
+      ...prev,
+      sizes: prev.sizes.filter((_, index) => index !== indexToRemove),
+    }));
+  };
+
+  /* =========================================================
+     RESET FORM
+  ========================================================= */
+
+  const resetForm = () => {
+    setFormData(getInitialForm());
+    setEditingId(null);
+  };
+
+  /* =========================================================
+     VALIDATION
+  ========================================================= */
+
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      showMessage("Please enter a product name.", "error");
+      return false;
+    }
+
+    if (!formData.description.trim()) {
+      showMessage("Please enter a product description.", "error");
+      return false;
+    }
+
+    if (
+      formData.price === "" ||
+      Number.isNaN(Number(formData.price)) ||
+      Number(formData.price) < 0
+    ) {
+      showMessage("Please enter a valid selling price.", "error");
+      return false;
+    }
+
+    if (!formData.category) {
+      showMessage("Please select a category.", "error");
+      return false;
+    }
+
+    if (formData.originalPrice !== "") {
+      if (
+        Number.isNaN(Number(formData.originalPrice)) ||
+        Number(formData.originalPrice) < 0
+      ) {
+        showMessage("Please enter a valid original price.", "error");
+        return false;
+      }
+    }
+
+    if (formData.images.length === 0) {
+      showMessage("Please select at least one product image.", "error");
+      return false;
+    }
+
+    return true;
+  };
+
+  /* =========================================================
+     PREPARE PRODUCT DATA
+  ========================================================= */
+
+  const prepareProductData = (uploadedImages = []) => {
+    const data = {
+      name: formData.name.trim(),
+      description: formData.description.trim(),
+      price: Number(formData.price),
+      category: formData.category,
+      collectionName: formData.collection.trim(),
+      images: uploadedImages,
+
+      sizes: formData.sizes
+        .filter((size) => size.name && size.name.trim() !== "")
+        .map((size) => ({
+          name: size.name.trim(),
+          stock: size.stock === "" ? 0 : Number(size.stock),
+        })),
+
+      isBestSeller: Boolean(formData.bestseller),
+      isFeatured: Boolean(formData.featured),
+      isActive: Boolean(formData.isActive),
     };
+
+    if (formData.originalPrice !== "") {
+      data.originalPrice = Number(formData.originalPrice);
+    }
+
+    return data;
+  };
 
   /* =========================================================
      UPLOAD IMAGES
@@ -328,26 +300,16 @@
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (loading) {
-      return;
-    }
-
-    if (!validateForm()) {
-      return;
-    }
+    if (loading) return;
+    if (!validateForm()) return;
 
     try {
       setLoading(true);
-
-      /* =====================================================
-         CREATE
-      ===================================================== */
 
       if (!editingId) {
         showMessage("Uploading product images...", "info");
 
         const uploadedImages = await uploadProductImages(formData.images);
-
         const productData = prepareProductData(uploadedImages);
 
         console.log("Creating product:", productData);
@@ -357,19 +319,13 @@
         await createProduct(productData);
 
         showMessage("Product added successfully!", "success");
-      }
-
-      /* =====================================================
-         UPDATE
-      ===================================================== */
-
-      if (editingId) {
+      } else {
         const existingImages = formData.images.filter(
-          (image) => typeof image === "string",
+          (image) => typeof image === "string"
         );
 
         const newImages = formData.images.filter(
-          (image) => typeof image !== "string",
+          (image) => typeof image !== "string"
         );
 
         let uploadedNewImages = [];
@@ -395,19 +351,14 @@
         showMessage("Product updated successfully!", "success");
       }
 
-      /* =====================================================
-         RESET + REFRESH
-      ===================================================== */
-
       resetForm();
-
       await loadProducts();
     } catch (error) {
       console.error("Product submit error:", error);
 
       showMessage(
         error?.message || "Something went wrong. Please try again.",
-        "error",
+        "error"
       );
     } finally {
       setLoading(false);
@@ -428,17 +379,11 @@
 
     setFormData({
       name: product.name || "",
-
       description: product.description || "",
-
       price: product.price ?? "",
-
       originalPrice: product.originalPrice ?? "",
-
       category: product.category || "",
-
       collection: product.collection ?? product.collectionName ?? "",
-
       images: Array.isArray(product.images) ? product.images : [],
 
       sizes:
@@ -447,17 +392,10 @@
               name: size.name || "",
               stock: size.stock ?? "",
             }))
-          : [
-              {
-                name: "",
-                stock: "",
-              },
-            ],
+          : [{ name: "", stock: "" }],
 
       bestseller: product.bestseller ?? product.isBestSeller ?? false,
-
       featured: product.featured ?? product.isFeatured ?? false,
-
       isActive: product.isActive ?? true,
     });
 
@@ -480,12 +418,10 @@
     }
 
     const confirmed = window.confirm(
-      "Are you sure you want to delete this product?",
+      "Are you sure you want to delete this product?"
     );
 
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     try {
       setLoading(true);
@@ -496,19 +432,11 @@
 
       await deleteProduct(id);
 
-      /*
-        Remove deleted product
-        from the screen.
-      */
-
       setProducts((prevProducts) =>
-        prevProducts.filter((product) => String(product._id) !== String(id)),
+        prevProducts.filter(
+          (product) => String(product._id) !== String(id)
+        )
       );
-
-      /*
-        If deleted product was
-        currently being edited.
-      */
 
       if (String(editingId) === String(id)) {
         resetForm();
@@ -518,12 +446,10 @@
     } catch (error) {
       console.error("Delete product error:", error);
 
-      showMessage(error?.message || "Failed to delete product.", "error");
-
-/*
-        Reload products so the
-        UI matches the database.
-      */
+      showMessage(
+        error?.message || "Failed to delete product.",
+        "error"
+      );
 
       await loadProducts();
     } finally {
@@ -536,31 +462,16 @@
   ========================================================= */
 
   const getImageUrl = (image) => {
-    if (!image) {
-      return "";
-    }
-
-    /*
-      Backend URL
-    */
+    if (!image) return "";
 
     if (typeof image === "string") {
-      if (image.startsWith("http")) {
-        return image;
-      }
-
-      if (image.startsWith("/")) {
-        return `${API_BASE_URL}${image}`;
-      }
+      if (image.startsWith("http")) return image;
+      if (image.startsWith("/")) return `${API_BASE_URL}${image}`;
 
       return `${API_BASE_URL}/${image}`;
     }
 
-    /*
-      Local uploaded File
-    */
-
-    if (image instanceof File) {
+    if (typeof File !== "undefined" && image instanceof File) {
       return URL.createObjectURL(image);
     }
 
@@ -568,53 +479,53 @@
   };
 
   /* =========================================================
-     MESSAGE STYLE
+     SHARED STYLES
   ========================================================= */
 
-  const getMessageStyle = () => {
-    if (messageType === "success") {
-      return "border-emerald-200 bg-emerald-50 text-emerald-700";
-    }
+  const inputClass =
+    "w-full rounded-xl border border-[#D4E2D0] bg-[#FAFCF8] px-4 py-3.5 text-sm text-[#173D2B] outline-none transition placeholder:text-[#9AAA9A] focus:border-[#286844] focus:bg-white focus:ring-4 focus:ring-[#286844]/10 disabled:cursor-not-allowed disabled:opacity-60";
 
-    if (messageType === "error") {
-      return "border-red-200 bg-red-50 text-red-700";
-    }
-      
-    return "border-[#D8C7DF] bg-[#F8F2FA] text-[#76517F]";
-  };
+  const labelClass =
+    "mb-2 block text-sm font-semibold text-[#315640]";
+
+  const sectionHeadingClass =
+    "font-serif text-2xl text-[#173D2B]";
+
+  const sectionBorderClass =
+    "border-t border-[#DCE7D8] pt-8";
 
   /* =========================================================
      JSX
   ========================================================= */
 
   return (
-    <div className="min-h-screen bg-[#F5EEF7] px-4 py-8 md:px-8 lg:px-12">
+    <div className="min-h-screen bg-[#F3F7F0] px-4 mt-20 bg-white py-8 md:px-8 lg:px-12">
       <div className="mx-auto max-w-7xl">
-        {/* ===================================================
-            HEADER
-        =================================================== */}
+        {/* HEADER */}
 
-        <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <div className="mb-8 mt-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="mb-3 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#281A35] text-white">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#173D2B] text-white">
                 <Package size={21} />
               </div>
 
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#76517F]">
-                  YAMA FLYS
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#286844]">
+                  YAMA FLAYS
                 </p>
 
-                <p className="text-xs text-[#8B7D91]">Store Management</p>
+                <p className="text-xs text-[#718574]">
+                  Store Management
+                </p>
               </div>
             </div>
 
-            <h1 className="font-serif text-4xl font-medium text-[#281A35] md:text-5xl">
+            <h1 className="font-serif text-4xl font-medium text-[#173D2B] md:text-5xl">
               Product Admin
             </h1>
 
-            <p className="mt-2 max-w-xl text-sm leading-6 text-[#756A7C]">
+            <p className="mt-2 max-w-xl text-sm leading-6 text-[#526B58]">
               Add, edit and manage your bangle products from one place.
             </p>
           </div>
@@ -623,7 +534,7 @@
             type="button"
             onClick={loadProducts}
             disabled={productsLoading || loading}
-            className="flex w-fit items-center gap-2 rounded-xl border border-[#D8C7DF] bg-white px-4 py-3 text-sm font-medium text-[#76517F] hover:bg-[#FBF8FC] disabled:opacity-50"
+            className="flex w-fit items-center gap-2 rounded-xl border border-[#D4E2D0] bg-white px-4 py-3 text-sm font-medium text-[#286844] transition hover:bg-[#EEF5E9] disabled:opacity-50"
           >
             <RefreshCw
               size={16}
@@ -633,9 +544,7 @@
           </button>
         </div>
 
-        {/* ===================================================
-            MESSAGE
-        =================================================== */}
+        {/* MESSAGE */}
 
         {message && (
           <div
@@ -653,26 +562,22 @@
           </div>
         )}
 
-        {/* ===================================================
-            FORM
-        =================================================== */}
+        {/* PRODUCT FORM */}
 
-        <div className="mb-12 overflow-hidden rounded-3xl border border-[#E3D7E8] bg-white shadow-[0_12px_40px_rgba(40,26,53,0.06)]">
-          {/* FORM HEADER */}
-
-          <div className="border-b border-[#EDE6F0] bg-gradient-to-r from-[#FBF8FC] to-white px-6 py-6 md:px-8">
+        <div className="mb-12 overflow-hidden rounded-3xl border border-[#DCE7D8] bg-white shadow-[0_12px_40px_rgba(23,61,43,0.06)]">
+          <div className="border-b border-[#E7EEE3] bg-gradient-to-r from-[#F6FAF3] to-white px-6 py-6 md:px-8">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E9DDED] text-[#76517F]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E0EBDD] text-[#286844]">
                   {editingId ? <Edit3 size={19} /> : <Plus size={20} />}
                 </div>
 
                 <div>
-                  <h2 className="font-serif text-2xl text-[#281A35]">
+                  <h2 className="font-serif text-2xl text-[#173D2B]">
                     {editingId ? "Edit Product" : "Add New Product"}
                   </h2>
 
-                  <p className="text-xs text-[#8B7D91]">
+                  <p className="text-xs text-[#718574]">
                     {editingId
                       ? "Update your product information."
                       : "Create a new product for your store."}
@@ -685,7 +590,7 @@
                   type="button"
                   onClick={resetForm}
                   disabled={loading}
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[#76517F] hover:bg-[#F5EEF7]"
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[#286844] transition hover:bg-[#EEF5E9] disabled:opacity-50"
                 >
                   <X size={16} />
                   Cancel Edit
@@ -695,24 +600,20 @@
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8 p-6 md:p-8">
-            {/* =================================================
-                BASIC INFORMATION
-            ================================================= */}
+            {/* BASIC INFORMATION */}
 
             <section>
               <div className="mb-5 flex items-center gap-3">
                 <div className="h-8 w-1 rounded-full bg-[#C9A227]" />
 
-                <h3 className="font-serif text-2xl text-[#281A35]">
+                <h3 className={sectionHeadingClass}>
                   Basic Information
                 </h3>
               </div>
 
               <div className="grid gap-5">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#403445]">
-                    Product Name
-                  </label>
+                  <label className={labelClass}>Product Name</label>
 
                   <input
                     type="text"
@@ -721,14 +622,12 @@
                     onChange={handleChange}
                     disabled={loading}
                     placeholder="Example: Royal Bridal Bangles"
-                    className="w-full rounded-xl border border-[#DDD2E2] bg-[#FCFAFD] px-4 py-3.5 text-sm outline-none focus:border-[#76517F] focus:bg-white focus:ring-4 focus:ring-[#76517F]/10"
+                    className={inputClass}
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#403445]">
-                    Description
-                  </label>
+                  <label className={labelClass}>Description</label>
 
                   <textarea
                     name="description"
@@ -737,31 +636,27 @@
                     disabled={loading}
                     rows={5}
                     placeholder="Describe the bangle design..."
-                    className="w-full resize-none rounded-xl border border-[#DDD2E2] bg-[#FCFAFD] px-4 py-3.5 text-sm outline-none focus:border-[#76517F] focus:bg-white focus:ring-4 focus:ring-[#76517F]/10"
+                    className={`${inputClass} resize-none`}
                   />
                 </div>
               </div>
             </section>
 
-            {/* =================================================
-                PRICING
-            ================================================= */}
+            {/* PRICING */}
 
-            <section className="border-t border-[#EEE7F1] pt-8">
+            <section className={sectionBorderClass}>
               <div className="mb-5 flex items-center gap-3">
                 <div className="h-8 w-1 rounded-full bg-[#C9A227]" />
 
-                <h3 className="font-serif text-2xl text-[#281A35]">Pricing</h3>
+                <h3 className={sectionHeadingClass}>Pricing</h3>
               </div>
 
               <div className="grid gap-5 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#403445]">
-                    Selling Price
-                  </label>
+                  <label className={labelClass}>Selling Price</label>
 
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-[#76517F]">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-[#286844]">
                       ₹
                     </span>
 
@@ -773,18 +668,16 @@
                       disabled={loading}
                       min="0"
                       placeholder="2499"
-                      className="w-full rounded-xl border border-[#DDD2E2] bg-[#FCFAFD] py-3.5 pl-9 pr-4 text-sm outline-none focus:border-[#76517F] focus:bg-white focus:ring-4 focus:ring-[#76517F]/10"
+                      className={`${inputClass} pl-9`}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#403445]">
-                    Original Price
-                  </label>
+                  <label className={labelClass}>Original Price</label>
 
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-[#8B7D91]">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-[#718574]">
                       ₹
                     </span>
 
@@ -796,61 +689,48 @@
                       disabled={loading}
                       min="0"
                       placeholder="2999"
-                      className="w-full rounded-xl border border-[#DDD2E2] bg-[#FCFAFD] py-3.5 pl-9 pr-4 text-sm outline-none focus:border-[#76517F] focus:bg-white focus:ring-4 focus:ring-[#76517F]/10"
+                      className={`${inputClass} pl-9`}
                     />
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* =================================================
-                CATEGORY
-            ================================================= */}
+            {/* CATEGORY AND COLLECTION */}
 
-            <section className="border-t border-[#EEE7F1] pt-8">
+            <section className={sectionBorderClass}>
               <div className="mb-5 flex items-center gap-3">
                 <div className="h-8 w-1 rounded-full bg-[#C9A227]" />
 
-                <h3 className="font-serif text-2xl text-[#281A35]">
-                  Category & Collection
+                <h3 className={sectionHeadingClass}>
+                  Category &amp; Collection
                 </h3>
               </div>
 
               <div className="grid gap-5 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#403445]">
-                    Category
-                  </label>
+                  <label className={labelClass}>Category</label>
 
                   <select
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
                     disabled={loading}
-                    className="w-full rounded-xl border border-[#DDD2E2] bg-[#FCFAFD] px-4 py-3.5 text-sm outline-none focus:border-[#76517F] focus:ring-4 focus:ring-[#76517F]/10"
+                    className={inputClass}
                   >
                     <option value="">Select Category</option>
-
                     <option value="Bridal">Bridal</option>
-
                     <option value="Designer">Designer</option>
-
                     <option value="Traditional">Traditional</option>
-
                     <option value="Daily Wear">Daily Wear</option>
-
                     <option value="Stone">Stone</option>
-
                     <option value="Pearl">Pearl</option>
-
                     <option value="Festive">Festive</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#403445]">
-                    Collection
-                  </label>
+                  <label className={labelClass}>Collection</label>
 
                   <input
                     type="text"
@@ -859,54 +739,52 @@
                     onChange={handleChange}
                     disabled={loading}
                     placeholder="Wedding Collection"
-                    className="w-full rounded-xl border border-[#DDD2E2] bg-[#FCFAFD] px-4 py-3.5 text-sm outline-none focus:border-[#76517F] focus:bg-white focus:ring-4 focus:ring-[#76517F]/10"
+                    className={inputClass}
                   />
                 </div>
               </div>
             </section>
 
-            {/* =================================================
-                IMAGES
-            ================================================= */}
+            {/* PRODUCT IMAGES */}
 
-            <section className="border-t border-[#EEE7F1] pt-8">
-              <div className="mb-5 flex items-center justify-between">
+            <section className={sectionBorderClass}>
+              <div className="mb-5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-1 rounded-full bg-[#C9A227]" />
 
                   <div>
-                    <h3 className="font-serif text-2xl text-[#281A35]">
+                    <h3 className={sectionHeadingClass}>
                       Product Images
                     </h3>
 
-                    <p className="mt-1 text-xs text-[#8B7D91]">
+                    <p className="mt-1 text-xs text-[#718574]">
                       Upload JPG, PNG or WEBP images.
                     </p>
                   </div>
                 </div>
 
                 {formData.images.length > 0 && (
-                  <span className="rounded-full bg-[#E9DDED] px-3 py-1 text-xs font-semibold text-[#76517F]">
+                  <span className="rounded-full bg-[#E0EBDD] px-3 py-1 text-xs font-semibold text-[#286844]">
                     {formData.images.length} image
                     {formData.images.length !== 1 ? "s" : ""}
                   </span>
                 )}
               </div>
 
-              <label className="group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#D8C7DF] bg-[#FBF8FC] px-6 py-10 text-center hover:border-[#76517F] hover:bg-[#F8F1FA]">
-                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E9DDED] text-[#76517F]">
+              <label className="group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#D4E2D0] bg-[#F6FAF3] px-6 py-10 text-center transition hover:border-[#286844] hover:bg-[#EEF5E9]">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E0EBDD] text-[#286844] transition group-hover:bg-[#D4E2D0]">
                   <Upload size={24} />
                 </div>
 
-                <p className="text-sm font-semibold text-[#281A35]">
+                <p className="text-sm font-semibold text-[#173D2B]">
                   Choose Product Images
                 </p>
 
-                <p className="mt-1 text-xs text-[#8B7D91]">
+                <p className="mt-1 text-xs text-[#718574]">
                   Select one or multiple images
                 </p>
 
-                <span className="mt-4 rounded-lg bg-[#281A35] px-4 py-2 text-xs font-medium text-white">
+                <span className="mt-4 rounded-lg bg-[#1D5136] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#173D2B]">
                   Browse Images
                 </span>
 
@@ -925,9 +803,9 @@
                   {formData.images.map((image, index) => (
                     <div
                       key={`${typeof image === "string" ? image : image.name}-${index}`}
-                      className="group overflow-hidden rounded-2xl border border-[#E4DCE8] bg-white"
+                      className="group overflow-hidden rounded-2xl border border-[#DCE7D8] bg-white"
                     >
-                      <div className="relative aspect-square bg-[#F8F4F9]">
+                      <div className="relative aspect-square bg-[#F3F7F0]">
                         <img
                           src={getImageUrl(image)}
                           alt={`Product ${index + 1}`}
@@ -938,7 +816,8 @@
                           type="button"
                           onClick={() => removeImage(index)}
                           disabled={loading}
-                          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#281A35]/85 text-white opacity-0 group-hover:opacity-100 hover:bg-red-600"
+                          aria-label={`Remove image ${index + 1}`}
+                          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#173D2B]/85 text-white opacity-100 transition hover:bg-red-600 sm:opacity-0 sm:group-hover:opacity-100"
                         >
                           <X size={15} />
                         </button>
@@ -951,7 +830,7 @@
                       </div>
 
                       <div className="px-3 py-2.5">
-                        <p className="truncate text-[11px] text-[#756A7C]">
+                        <p className="truncate text-[11px] text-[#526B58]">
                           {typeof image === "string"
                             ? image.split("/").pop()
                             : image.name}
@@ -963,21 +842,19 @@
               )}
             </section>
 
-            {/* =================================================
-                SIZES
-            ================================================= */}
+            {/* SIZES AND STOCK */}
 
-            <section className="border-t border-[#EEE7F1] pt-8">
-              <div className="mb-5 flex items-center justify-between">
+            <section className={sectionBorderClass}>
+              <div className="mb-5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-1 rounded-full bg-[#C9A227]" />
 
                   <div>
-                    <h3 className="font-serif text-2xl text-[#281A35]">
-                      Sizes & Stock
+                    <h3 className={sectionHeadingClass}>
+                      Sizes &amp; Stock
                     </h3>
 
-                    <p className="mt-1 text-xs text-[#8B7D91]">
+                    <p className="mt-1 text-xs text-[#718574]">
                       Manage available bangle sizes.
                     </p>
                   </div>
@@ -987,7 +864,7 @@
                   type="button"
                   onClick={addSize}
                   disabled={loading}
-                  className="flex items-center gap-2 rounded-xl bg-[#76517F] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#65436E] disabled:opacity-50"
+                  className="flex items-center gap-2 rounded-xl bg-[#286844] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#1D5136] disabled:opacity-50"
                 >
                   <Plus size={15} />
                   Add Size
@@ -998,10 +875,10 @@
                 {formData.sizes.map((size, index) => (
                   <div
                     key={index}
-                    className="grid gap-3 rounded-2xl border border-[#E5DDE9] bg-[#FCFAFD] p-4 md:grid-cols-[1fr_1fr_auto]"
+                    className="grid gap-3 rounded-2xl border border-[#DCE7D8] bg-[#FAFCF8] p-4 md:grid-cols-[1fr_1fr_auto]"
                   >
                     <div>
-                      <label className="mb-1.5 block text-[11px] font-semibold uppercase text-[#8B7D91]">
+                      <label className="mb-1.5 block text-[11px] font-semibold uppercase text-[#718574]">
                         Size
                       </label>
 
@@ -1013,12 +890,12 @@
                         }
                         disabled={loading}
                         placeholder="2.4"
-                        className="w-full rounded-xl border border-[#DDD2E2] bg-white px-4 py-3 text-sm outline-none focus:border-[#76517F] focus:ring-4 focus:ring-[#76517F]/10"
+                        className={`${inputClass} bg-white`}
                       />
                     </div>
 
                     <div>
-                      <label className="mb-1.5 block text-[11px] font-semibold uppercase text-[#8B7D91]">
+                      <label className="mb-1.5 block text-[11px] font-semibold uppercase text-[#718574]">
                         Stock
                       </label>
 
@@ -1031,7 +908,7 @@
                         }
                         disabled={loading}
                         placeholder="10"
-                        className="w-full rounded-xl border border-[#DDD2E2] bg-white px-4 py-3 text-sm outline-none focus:border-[#76517F] focus:ring-4 focus:ring-[#76517F]/10"
+                        className={`${inputClass} bg-white`}
                       />
                     </div>
 
@@ -1040,7 +917,7 @@
                         type="button"
                         onClick={() => removeSize(index)}
                         disabled={loading}
-                        className="flex items-center justify-center gap-2 rounded-xl border border-red-200 px-4 py-3 text-sm text-red-600 hover:bg-red-50 md:self-end"
+                        className="flex items-center justify-center gap-2 rounded-xl border border-red-200 px-4 py-3 text-sm text-red-600 transition hover:bg-red-50 md:self-end"
                       >
                         <Trash2 size={15} />
                         <span>Remove</span>
@@ -1051,65 +928,61 @@
               </div>
             </section>
 
-            {/* =================================================
-                OPTIONS
-            ================================================= */}
+            {/* PRODUCT OPTIONS */}
 
-            <section className="border-t border-[#EEE7F1] pt-8">
+            <section className={sectionBorderClass}>
               <div className="mb-5 flex items-center gap-3">
                 <div className="h-8 w-1 rounded-full bg-[#C9A227]" />
 
-                <h3 className="font-serif text-2xl text-[#281A35]">
-                  Product Options
-                </h3>
+                <h3 className={sectionHeadingClass}>Product Options</h3>
               </div>
 
               <div className="grid gap-3 md:grid-cols-3">
-                <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[#E5DDE9] bg-[#FCFAFD] p-4 hover:border-[#C9A227]">
+                <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[#DCE7D8] bg-[#FAFCF8] p-4 transition hover:border-[#C9A227]">
                   <input
                     type="checkbox"
                     name="bestseller"
                     checked={formData.bestseller}
                     onChange={handleChange}
                     disabled={loading}
-                    className="h-4 w-4 accent-[#76517F]"
+                    className="h-4 w-4 accent-[#286844]"
                   />
 
                   <div>
-                    <div className="flex items-center gap-2 text-sm font-semibold text-[#281A35]">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-[#173D2B]">
                       <Star size={15} className="text-[#C9A227]" />
                       Bestseller
                     </div>
 
-                    <p className="mt-1 text-[11px] text-[#8B7D91]">
+                    <p className="mt-1 text-[11px] text-[#718574]">
                       Show as bestseller
                     </p>
                   </div>
                 </label>
 
-                <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[#E5DDE9] bg-[#FCFAFD] p-4 hover:border-[#76517F]">
+                <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[#DCE7D8] bg-[#FAFCF8] p-4 transition hover:border-[#286844]">
                   <input
                     type="checkbox"
                     name="featured"
                     checked={formData.featured}
                     onChange={handleChange}
                     disabled={loading}
-                    className="h-4 w-4 accent-[#76517F]"
+                    className="h-4 w-4 accent-[#286844]"
                   />
 
                   <div>
-                    <div className="flex items-center gap-2 text-sm font-semibold text-[#281A35]">
-                      <Sparkles size={15} className="text-[#76517F]" />
+                    <div className="flex items-center gap-2 text-sm font-semibold text-[#173D2B]">
+                      <Sparkles size={15} className="text-[#286844]" />
                       Featured
                     </div>
 
-                    <p className="mt-1 text-[11px] text-[#8B7D91]">
+                    <p className="mt-1 text-[11px] text-[#718574]">
                       Highlight product
                     </p>
                   </div>
                 </label>
 
-                <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[#E5DDE9] bg-[#FCFAFD] p-4 hover:border-emerald-400">
+                <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[#DCE7D8] bg-[#FAFCF8] p-4 transition hover:border-emerald-400">
                   <input
                     type="checkbox"
                     name="isActive"
@@ -1120,12 +993,15 @@
                   />
 
                   <div>
-                    <div className="flex items-center gap-2 text-sm font-semibold text-[#281A35]">
-                      <CheckCircle2 size={15} className="text-emerald-600" />
+                    <div className="flex items-center gap-2 text-sm font-semibold text-[#173D2B]">
+                      <CheckCircle2
+                        size={15}
+                        className="text-emerald-600"
+                      />
                       Active
                     </div>
 
-                    <p className="mt-1 text-[11px] text-[#8B7D91]">
+                    <p className="mt-1 text-[11px] text-[#718574]">
                       Visible in store
                     </p>
                   </div>
@@ -1133,26 +1009,22 @@
               </div>
             </section>
 
-            {/* =================================================
-                SUBMIT
-            ================================================= */}
+            {/* SUBMIT */}
 
-            <div className="flex flex-col gap-3 border-t border-[#EEE7F1] pt-7 sm:flex-row">
+            <div className="flex flex-col gap-3 border-t border-[#DCE7D8] pt-7 sm:flex-row">
               <button
                 type="submit"
                 disabled={loading}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#281A35] px-6 py-4 text-sm font-semibold text-white hover:bg-[#3A2749] disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#173D2B] px-6 py-4 text-sm font-semibold text-white transition hover:bg-[#1D5136] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? (
                   <>
                     <RefreshCw size={17} className="animate-spin" />
-
                     {editingId ? "Updating Product..." : "Adding Product..."}
                   </>
                 ) : (
                   <>
                     {editingId ? <Save size={17} /> : <Plus size={17} />}
-
                     {editingId ? "Save Product Changes" : "Add Product"}
                   </>
                 )}
@@ -1163,7 +1035,7 @@
                   type="button"
                   onClick={resetForm}
                   disabled={loading}
-                  className="rounded-xl border border-[#D8C7DF] bg-white px-6 py-4 text-sm font-semibold text-[#76517F] hover:bg-[#F8F2FA]"
+                  className="rounded-xl border border-[#D4E2D0] bg-white px-6 py-4 text-sm font-semibold text-[#286844] transition hover:bg-[#EEF5E9]"
                 >
                   Cancel
                 </button>
@@ -1172,60 +1044,54 @@
           </form>
         </div>
 
-        {/* =====================================================
-            PRODUCT LIST
-        ===================================================== */}
+        {/* PRODUCT INVENTORY */}
 
         <section>
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <div className="mb-2 flex items-center gap-3">
-                <Boxes size={20} className="text-[#76517F]" />
+                <Boxes size={20} className="text-[#286844]" />
 
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#76517F]">
+                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#286844]">
                   Inventory
                 </p>
               </div>
 
-              <h2 className="font-serif text-3xl text-[#281A35]">
+              <h2 className="font-serif text-3xl text-[#173D2B]">
                 Your Products
               </h2>
 
-              <p className="mt-1 text-sm text-[#756A7C]">
+              <p className="mt-1 text-sm text-[#526B58]">
                 Manage products currently stored in your database.
               </p>
             </div>
 
-            <div className="flex items-center gap-2 rounded-full border border-[#DDD2E2] bg-white px-4 py-2 text-sm text-[#76517F]">
+            <div className="flex items-center gap-2 rounded-full border border-[#D4E2D0] bg-white px-4 py-2 text-sm text-[#286844]">
               <Package size={15} />
-              {products.length} Product
-              {products.length !== 1 ? "s" : ""}
+              {products.length} Product{products.length !== 1 ? "s" : ""}
             </div>
           </div>
 
-          {/* =================================================
-              LOADING
-          ================================================= */}
+          {/* LOADING */}
 
           {productsLoading ? (
-            <div className="flex min-h-[250px] items-center justify-center rounded-3xl border border-[#E3D7E8] bg-white">
-              <div className="flex flex-col items-center gap-3 text-[#76517F]">
+            <div className="flex min-h-[250px] items-center justify-center rounded-3xl border border-[#DCE7D8] bg-white">
+              <div className="flex flex-col items-center gap-3 text-[#286844]">
                 <RefreshCw size={24} className="animate-spin" />
-
                 <p className="text-sm">Loading products...</p>
               </div>
             </div>
           ) : products.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-[#D8C7DF] bg-white px-6 py-16 text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F1E8F4] text-[#76517F]">
+            <div className="rounded-3xl border border-dashed border-[#D4E2D0] bg-white px-6 py-16 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#E8F1E3] text-[#286844]">
                 <ImageIcon size={26} />
               </div>
 
-              <h3 className="font-serif text-2xl text-[#281A35]">
+              <h3 className="font-serif text-2xl text-[#173D2B]">
                 No products yet
               </h3>
 
-              <p className="mx-auto mt-2 max-w-md text-sm text-[#756A7C]">
+              <p className="mx-auto mt-2 max-w-md text-sm text-[#526B58]">
                 Add your first bangle product using the form above.
               </p>
             </div>
@@ -1234,11 +1100,11 @@
               {products.map((product) => (
                 <div
                   key={product._id}
-                  className="group overflow-hidden rounded-3xl border border-[#E3D7E8] bg-white shadow-[0_8px_30px_rgba(40,26,53,0.05)] transition hover:-translate-y-1"
+                  className="group overflow-hidden rounded-3xl border border-[#DCE7D8] bg-white shadow-[0_8px_30px_rgba(23,61,43,0.05)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_14px_35px_rgba(23,61,43,0.10)]"
                 >
-                  {/* IMAGE */}
+                  {/* PRODUCT IMAGE */}
 
-                  <div className="relative aspect-[4/3] overflow-hidden bg-[#F7F2F8]">
+                  <div className="relative aspect-[4/3] overflow-hidden bg-[#F3F7F0]">
                     {product.images?.[0] ? (
                       <img
                         src={getImageUrl(product.images[0])}
@@ -1246,7 +1112,7 @@
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                       />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-[#9C8FA2]">
+                      <div className="flex h-full items-center justify-center text-[#819481]">
                         <ImageIcon size={32} />
                       </div>
                     )}
@@ -1267,45 +1133,45 @@
                     </div>
 
                     {product.images?.length > 1 && (
-                      <span className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-[#281A35]/80 px-2.5 py-1 text-[10px] text-white">
+                      <span className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-[#173D2B]/80 px-2.5 py-1 text-[10px] text-white">
                         <ImageIcon size={11} />
                         {product.images.length}
                       </span>
                     )}
                   </div>
 
-                  {/* CONTENT */}
+                  {/* PRODUCT CONTENT */}
 
                   <div className="p-5">
                     <div className="mb-3 flex items-start justify-between gap-3">
                       <div>
-                        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#76517F]">
+                        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#286844]">
                           {product.category}
                         </p>
 
-                        <h3 className="font-serif text-xl text-[#281A35]">
+                        <h3 className="font-serif text-xl text-[#173D2B]">
                           {product.name}
                         </h3>
                       </div>
 
                       {(product.featured ?? product.isFeatured) && (
-                        <div className="rounded-lg bg-[#F1E8F4] p-2 text-[#76517F]">
+                        <div className="rounded-lg bg-[#E8F1E3] p-2 text-[#286844]">
                           <Sparkles size={15} />
                         </div>
                       )}
                     </div>
 
-                    <p className="mb-4 line-clamp-2 text-xs leading-5 text-[#756A7C]">
+                    <p className="mb-4 line-clamp-2 text-xs leading-5 text-[#526B58]">
                       {product.description}
                     </p>
 
                     <div className="mb-4 flex items-end gap-2">
-                      <span className="text-xl font-bold text-[#281A35]">
+                      <span className="text-xl font-bold text-[#173D2B]">
                         ₹{product.price}
                       </span>
 
                       {product.originalPrice > product.price && (
-                        <span className="text-xs text-[#A398A8] line-through">
+                        <span className="text-xs text-[#9AAA9A] line-through">
                           ₹{product.originalPrice}
                         </span>
                       )}
@@ -1313,7 +1179,7 @@
 
                     {product.sizes?.length > 0 && (
                       <div className="mb-5">
-                        <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase text-[#8B7D91]">
+                        <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase text-[#718574]">
                           <Layers3 size={12} />
                           Sizes
                         </div>
@@ -1324,7 +1190,7 @@
                               key={index}
                               className={`rounded-md px-2 py-1 text-[10px] ${
                                 Number(size.stock) > 0
-                                  ? "bg-[#F1E8F4] text-[#76517F]"
+                                  ? "bg-[#E8F1E3] text-[#286844]"
                                   : "bg-gray-100 text-gray-400 line-through"
                               }`}
                             >
@@ -1342,7 +1208,7 @@
                         type="button"
                         onClick={() => handleEdit(product)}
                         disabled={loading}
-                        className="flex items-center justify-center gap-2 rounded-xl border border-[#D8C7DF] bg-white px-3 py-2.5 text-xs font-semibold text-[#76517F] hover:bg-[#F8F2FA] disabled:opacity-50"
+                        className="flex items-center justify-center gap-2 rounded-xl border border-[#D4E2D0] bg-white px-3 py-2.5 text-xs font-semibold text-[#286844] transition hover:bg-[#EEF5E9] disabled:opacity-50"
                       >
                         <Edit3 size={14} />
                         Edit
@@ -1352,7 +1218,7 @@
                         type="button"
                         onClick={() => handleDelete(product._id)}
                         disabled={loading}
-                        className="flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                        className="flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                       >
                         <Trash2 size={14} />
                         Delete
@@ -1367,10 +1233,10 @@
 
         {/* FOOTER */}
 
-        <div className="mt-10 flex items-center justify-center gap-2 text-center text-xs text-[#9C8FA2]">
-          <span className="h-px w-8 bg-[#D8C7DF]" />
+        <div className="mt-10 flex items-center justify-center gap-2 text-center text-xs text-[#819481]">
+          <span className="h-px w-8 bg-[#D4E2D0]" />
           YAMA FLYS Product Management
-          <span className="h-px w-8 bg-[#D8C7DF]" />
+          <span className="h-px w-8 bg-[#D4E2D0]" />
         </div>
       </div>
     </div>

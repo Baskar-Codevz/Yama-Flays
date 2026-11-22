@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+  import React, { useEffect, useMemo, useState } from "react";
 import { MessageCircle, Star, Sparkles, ArrowDown } from "lucide-react";
 
 const MAX_REVIEW_LENGTH = 500;

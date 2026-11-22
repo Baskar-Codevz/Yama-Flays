@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Routes, Route } from "react-router-dom";
 
 // Components
@@ -9,12 +9,13 @@ import ScrollProgress from "./components/ScrollProgress";
 
 // Home sections
 import Hero from "./sections/Hero";
-import Features from "./sections/Features";
 import Categories from "./sections/Categories";
 import BestSellers from "./sections/BestSellers";
 import PromoBanner from "./sections/PromoBanner";
 import BrandStory from "./sections/BrandStory";
+import Features from "./sections/Features";
 import CTA from "./sections/CTA";
+import Product from "./sections/Product";
 
 // Pages
 import Shop from "./pages/Shop";
@@ -29,6 +30,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProductAdmin from "./pages/ProductAdmin";
 import OrderSuccess from "./pages/OrderSuccess";
+import Profile from "./pages/Profile";
 
 // Route protection
 import AdminRoute from "./AdminRoute";
@@ -67,6 +69,10 @@ const Home = () => {
         <Categories />
       </ScrollReveal>
 
+      <ScrollReveal direction="left" delay={80}>
+        <Product />
+      </ScrollReveal>
+
       <ScrollReveal direction="up" delay={100}>
         <BestSellers />
       </ScrollReveal>
@@ -97,16 +103,11 @@ const App = () => {
       <ScrollProgress />
 
       <Routes>
-
-        {/* =====================================
-            HOME
-        ===================================== */}
+        {/* HOME */}
 
         <Route path="/" element={<Home />} />
 
-        {/* =====================================
-            SHOP
-        ===================================== */}
+        {/* SHOP */}
 
         <Route
           path="/shop"
@@ -117,9 +118,7 @@ const App = () => {
           }
         />
 
-        {/* =====================================
-            PRODUCT DETAILS
-        ===================================== */}
+        {/* PRODUCT DETAILS */}
 
         <Route
           path="/product/:id"
@@ -130,9 +129,7 @@ const App = () => {
           }
         />
 
-        {/* =====================================
-            CART
-        ===================================== */}
+        {/* CART */}
 
         <Route
           path="/cart"
@@ -143,10 +140,7 @@ const App = () => {
           }
         />
 
-        {/* =====================================
-            CHECKOUT
-            LOGIN REQUIRED
-        ===================================== */}
+        {/* CHECKOUT - LOGIN REQUIRED */}
 
         <Route element={<ProtectedRoute />}>
           <Route
@@ -159,9 +153,7 @@ const App = () => {
           />
         </Route>
 
-        {/* =====================================
-            WISHLIST
-        ===================================== */}
+        {/* WISHLIST */}
 
         <Route
           path="/wishlist"
@@ -172,9 +164,7 @@ const App = () => {
           }
         />
 
-        {/* =====================================
-            COLLECTIONS
-        ===================================== */}
+        {/* COLLECTIONS */}
 
         <Route
           path="/collections"
@@ -185,9 +175,7 @@ const App = () => {
           }
         />
 
-        {/* =====================================
-            ABOUT
-        ===================================== */}
+        {/* ABOUT */}
 
         <Route
           path="/about"
@@ -198,9 +186,7 @@ const App = () => {
           }
         />
 
-        {/* =====================================
-            CONTACT
-        ===================================== */}
+        {/* CONTACT */}
 
         <Route
           path="/contact"
@@ -211,31 +197,45 @@ const App = () => {
           }
         />
 
-        {/* =====================================
-            ORDER SUCCESS
-        ===================================== */}
+        {/* ORDER SUCCESS */}
 
         <Route
           path="/order-success"
-          element={<OrderSuccess />}
+          element={
+            <PageLayout>
+              <OrderSuccess />
+            </PageLayout>
+          }
         />
 
-        {/* =====================================
-            LOGIN
-        ===================================== */}
+        {/* LOGIN */}
 
-        <Route path="/login" element={<Login />} />
+        <Route
+          path="/login"
+          element={<Login />}
+        />
 
-        {/* =====================================
-            REGISTER
-        ===================================== */}
+        {/* REGISTER */}
 
-        <Route path="/register" element={<Register />} />
+        <Route
+          path="/register"
+          element={<Register />}
+        />
 
-        {/* =====================================
-            ADMIN PRODUCTS
-            ADMIN ONLY
-        ===================================== */}
+        {/* CUSTOMER PROFILE - LOGIN REQUIRED */}
+
+        <Route element={<ProtectedRoute />}>
+          <Route
+            path="/profile"
+            element={
+              <PageLayout>
+                <Profile />
+              </PageLayout>
+            }
+          />
+        </Route>
+
+        {/* ADMIN PRODUCTS - ADMIN ONLY */}
 
         <Route element={<AdminRoute />}>
           <Route
@@ -248,9 +248,7 @@ const App = () => {
           />
         </Route>
 
-        {/* =====================================
-            404
-        ===================================== */}
+        {/* 404 - PAGE NOT FOUND */}
 
         <Route
           path="*"
@@ -258,7 +256,6 @@ const App = () => {
             <PageLayout>
               <main className="flex min-h-[60vh] items-center justify-center bg-[#F5EEF7] px-6">
                 <div className="text-center">
-
                   <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#76517F]">
                     YAMA FLYS
                   </p>
@@ -270,13 +267,11 @@ const App = () => {
                   <p className="mt-4 text-sm text-[#756A7C]">
                     The page you are looking for does not exist.
                   </p>
-
                 </div>
               </main>
             </PageLayout>
           }
         />
-
       </Routes>
     </>
   );

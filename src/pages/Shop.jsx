@@ -1,6 +1,6 @@
-  import React, { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
 
+  import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   Search,
   SlidersHorizontal,
@@ -20,123 +20,319 @@ import ProductCard from "../components/ProductCard";
 import ScrollReveal from "../components/ScrollReveal";
 import { getProducts } from "../services/productApi";
 
-const Shop = () => {
+const CATEGORIES = [
+  { name: "All", description: "Everything beautiful", icon: Gem },
+  { name: "Bridal", description: "Made for special moments", icon: Sparkles },
+  { name: "Designer", description: "Statement jewellery", icon: Heart },
+  { name: "Traditional", description: "Timeless traditional style", icon: Layers3 },
+  { name: "Daily Wear", description: "Everyday elegance", icon: Star },
+  { name: "Stone", description: "Beautiful stone designs", icon: Gem },
+  { name: "Pearl", description: "Classic pearl elegance", icon: Crown },
+  { name: "Festive", description: "Celebrate in sparkle", icon: Sparkles },
+];
+
+const COLLECTIONS = [
+  { name: "All", description: "Explore everything" },
+  { name: "New Collection", description: "Freshly added pieces" },
+  { name: "Top Picks", description: "Customer favourites" },
+  { name: "Best Sellers", description: "Popular designs" },
+  { name: "Wedding", description: "Made for special moments" },
+  { name: "Festive", description: "Celebrate in sparkle" },
+  { name: "Designer", description: "Statement jewellery" },
+];
+
+const SORT_OPTIONS = [
+  { value: "default", label: "Sort: Featured" },
+  { value: "low", label: "Price: Low to High" },
+  { value: "high", label: "Price: High to Low" },
+  { value: "name", label: "Name: A to Z" },
+  { value: "rating", label: "Top Rated" },
+];
+
+const getProductText = (product) =>
+  [
+    product?.name,
+    product?.description,
+    typeof product?.category === "object"
+      ? product.category?.name
+      : product?.category,
+    product?.collectionName,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+const getProductCategory = (product) =>
+  String(
+    typeof product?.category === "object"
+      ? product.category?.name || ""
+      : product?.category || ""
+  )
+    .trim()
+    .toLowerCase();
+
+const getProductCollection = (product) =>
+  String(
+    typeof product?.collection === "string"
+      ? product.collection
+      : product?.collectionName || ""
+  )
+    .trim()
+    .toLowerCase();
+
+const getProductRating = (product) => {
+  const reviews = Array.isArray(product?.reviews) ? product.reviews : [];
+
+  if (!reviews.length) return 0;
+
+  return (
+    reviews.reduce((sum, review) => sum + Number(review?.rating || 0), 0) /
+    reviews.length
+  );
+};
+
+const collectionMatches = (product, selected) => {
+  const actual = getProductCollection(product);
+  const target = String(selected || "").trim().toLowerCase();
+
+  if (!actual || !target) return false;
+
+  return (
+    actual === target ||
+    actual === `${target} collection` ||
+    target === `${actual} collection`
+  );
+};
+
+function SectionHeading({ eyebrow, title, description, centered = false }) {
+  return (
+    <div
+      className={`mb-7 flex flex-col gap-3 sm:mb-9 ${
+        centered
+          ? "items-center text-center"
+          : "sm:flex-row sm:items-end sm:justify-between"
+      }`}
+    >
+      <div>
+        {eyebrow && (
+          <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-[#B99A55]">
+            {eyebrow}
+          </p>
+        )}
+
+        <h2 className="mt-2 font-serif text-3xl text-[#244535] sm:text-4xl">
+          {title}
+        </h2>
+      </div>
+
+      {description && (
+        <p className="max-w-md text-sm leading-6 text-[#718176]">
+          {description}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function FilterPill({ active, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`shrink-0 rounded-full border px-4 py-2.5 text-[9px] font-semibold uppercase tracking-[0.12em] transition duration-300 sm:px-5 ${
+        active
+          ? "border-[#244535] bg-[#244535] text-white"
+          : "border-[#DCE3DA] bg-white/80 text-[#526657] hover:border-[#B99A55] hover:text-[#244535]"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function MobileFilterDrawer({
+  open,
+  onClose,
+  categories,
+  collections,
+  selectedCategory,
+  selectedCollection,
+  onCategoryChange,
+  onCollectionChange,
+  hasFilters,
+  onClear,
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[200]">
+      <button
+        type="button"
+        aria-label="Close filters"
+        onClick={onClose}
+        className="absolute inset-0 bg-[#14281D]/45 backdrop-blur-sm"
+      />
+
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label="Shop filters"
+        className="absolute right-0 top-0 flex h-full w-[min(88%,380px)] flex-col overflow-y-auto border-l border-[#E1E7DF] bg-[#FCFCF8] px-5 pb-6 pt-6 shadow-2xl"
+      >
+        <div className="flex items-center justify-between border-b border-[#DCE3DA] pb-5">
+          <div>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[#B99A55]">
+              Refine your search
+            </p>
+
+            <h2 className="mt-1 font-serif text-2xl text-[#244535]">
+              Shop Jewellery
+            </h2>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close filter panel"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EDF1E9] text-[#244535]"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="mt-6">
+          <p className="mb-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#718176]">
+            Jewellery Type
+          </p>
+
+          <div className="grid gap-2">
+            {categories.map(({ name, description, icon: Icon }) => {
+              const active = selectedCategory === name;
+
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => onCategoryChange(name)}
+                  className={`flex items-center justify-between rounded-xl px-3 py-3 text-left transition ${
+                    active
+                      ? "bg-[#244535] text-white"
+                      : "bg-[#F0F3ED] text-[#244535] hover:bg-[#E7EDE4]"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon
+                      size={16}
+                      className={active ? "text-[#D8BD79]" : "text-[#244535]"}
+                    />
+
+                    <div>
+                      <p className="text-sm font-medium">{name}</p>
+                      <p
+                        className={`mt-0.5 text-[10px] ${
+                          active ? "text-white/70" : "text-[#718176]"
+                        }`}
+                      >
+                        {description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {active && (
+                    <Sparkles size={14} className="text-[#D8BD79]" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <p className="mb-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#718176]">
+            Collections
+          </p>
+
+          <div className="grid grid-cols-2 gap-2">
+            {collections.map(({ name, description }) => {
+              const active = selectedCollection === name;
+
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => onCollectionChange(name)}
+                  className={`rounded-xl px-3 py-3 text-left transition ${
+                    active
+                      ? "bg-[#244535] text-white"
+                      : "bg-[#F0F3ED] text-[#244535] hover:bg-[#E7EDE4]"
+                  }`}
+                >
+                  <p className="text-sm font-medium">{name}</p>
+
+                  <p
+                    className={`mt-1 text-[10px] ${
+                      active ? "text-white/70" : "text-[#718176]"
+                    }`}
+                  >
+                    {description}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mt-auto pt-6">
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={onClear}
+              className="mb-3 w-full rounded-full border border-[#D5DED3] bg-white py-3 text-xs font-semibold text-[#244535]"
+            >
+              Clear All Filters
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full rounded-full bg-[#244535] py-3 text-xs font-semibold text-white"
+          >
+            View Products
+          </button>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  /* =========================================================
-     STATE
-  ========================================================= */
-
   const [searchQuery, setSearchQuery] = useState(
-    searchParams.get("search") || "",
+    () => searchParams.get("search") || ""
   );
 
   const [selectedCategory, setSelectedCategory] = useState(
-    searchParams.get("category") || "All",
+    () => searchParams.get("category") || "All"
   );
 
   const [selectedCollection, setSelectedCollection] = useState(
-    searchParams.get("collection") || "All",
+    () => searchParams.get("collection") || "All"
   );
 
-  const [sortBy, setSortBy] = useState(searchParams.get("sort") || "default");
+  const [sortBy, setSortBy] = useState(
+    () => searchParams.get("sort") || "default"
+  );
 
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-
-  /* =========================================================
-     PRODUCTS
-  ========================================================= */
-
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  /* =========================================================
-     CATEGORIES
-  ========================================================= */
-         const jewelleryCategories = [
-  {
-    name: "All",
-    description: "Everything beautiful",
-    icon: Gem,
-  },
-  {
-    name: "Bridal",
-    description: "Made for special moments",
-    icon: Sparkles,
-  },
-  {
-    name: "Designer",
-    description: "Statement jewellery",
-    icon: Heart,
-  },
-  {
-    name: "Traditional",
-    description: "Timeless traditional style",
-    icon: Layers3,
-  },
-  {
-    name: "Daily Wear",
-    description: "Elegant everyday sparkle",
-    icon: Star,
-  },
-  {
-    name: "Stone",
-    description: "Beautiful stone designs",
-    icon: Gem,
-  },
-  {
-    name: "Pearl",
-    description: "Classic pearl elegance",
-    icon: Crown,
-  },
-  {
-    name: "Festive",
-    description: "Celebrate in sparkle",
-    icon: Sparkles,
-  },
-];
-
-  /* =========================================================
-     COLLECTIONS
-  ========================================================= */
-
-  const collectionFilters = [
-    {
-      name: "All",
-      description: "Explore everything",
-    },
-    {
-      name: "New Collection",
-      description: "Freshly added pieces",
-    },
-    {
-      name: "Top Picks",
-      description: "Loved by everyone",
-    },
-    {
-      name: "Best Sellers",
-      description: "Our most popular pieces",
-    },
-    {
-      name: "Wedding",
-      description: "Made for special moments",
-    },
-    {
-      name: "Festive",
-      description: "Celebrate in sparkle",
-    },
-    {
-      name: "Designer",
-      description: "Statement jewellery",
-    },
-  ];
-
-  /* =========================================================
-     LOAD PRODUCTS
-  ========================================================= */
-
   useEffect(() => {
+    let cancelled = false;
+
     const loadProducts = async () => {
       try {
         setLoading(true);
@@ -144,323 +340,86 @@ const Shop = () => {
 
         const data = await getProducts();
 
+        if (cancelled) return;
+
         if (data?.success && Array.isArray(data.products)) {
+          setProducts(data.products);
+        } else if (Array.isArray(data?.products)) {
           setProducts(data.products);
         } else {
           setProducts([]);
           setError("No products were returned from the server.");
         }
       } catch (err) {
-        console.error("SHOP PRODUCTS ERROR:", err);
+        if (cancelled) return;
 
-        setProducts([]);
-        setError(err.message || "Failed to load products.");
+        console.error("SHOP PRODUCTS ERROR:", err);
+        setError(err?.message || "Failed to load products.");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     loadProducts();
-  }, []);
 
-  /* =========================================================
-     SYNC URL -> STATE
-  ========================================================= */
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     setSearchQuery(searchParams.get("search") || "");
-
     setSelectedCategory(searchParams.get("category") || "All");
-
     setSelectedCollection(searchParams.get("collection") || "All");
-
     setSortBy(searchParams.get("sort") || "default");
   }, [searchParams]);
 
-  /* =========================================================
-     HELPERS
-  ========================================================= */
+  const updateParams = (updates) => {
+    const nextParams = new URLSearchParams(searchParams);
 
-  const getProductText = (product) => {
-    return [
-      product?.name,
-      product?.description,
-      product?.category,
-      product?.collectionName,
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
+    Object.entries(updates).forEach(([key, value]) => {
+      if (!value || value === "All" || value === "default") {
+        nextParams.delete(key);
+      } else {
+        nextParams.set(key, value);
+      }
+    });
+
+    setSearchParams(nextParams);
   };
-
-  const getProductCategory = (product) => {
-    return String(product?.category || "")
-      .trim()
-      .toLowerCase();
-  };
-
-  const getProductCollection = (product) => {
-    return String(product?.collectionName || "")
-      .trim()
-      .toLowerCase();
-  };
-
-  /* =========================================================
-     CALCULATE PRODUCT RATING
-  ========================================================= */
-
-  const getProductRating = (product) => {
-    const reviews = Array.isArray(product?.reviews) ? product.reviews : [];
-
-    if (reviews.length === 0) {
-      return 0;
-    }
-
-    const total = reviews.reduce(
-      (sum, review) => sum + Number(review?.rating || 0),
-      0,
-    );
-
-    return total / reviews.length;
-  };
-
-  /* =========================================================
-     COLLECTION MATCH
-  ========================================================= */
-
- const productCollectionMatches = (product, collection) => {
-  const productCollection = getProductCollection(product);
-  const selectedCollection = String(collection).trim().toLowerCase();
-
-  if (!productCollection || !selectedCollection) {
-    return false;
-  }
-
-  if (productCollection === selectedCollection) {
-    return true;
-  }
-
-  if (
-    productCollection === `${selectedCollection} collection` ||
-    selectedCollection === `${productCollection} collection`
-  ) {
-    return true;
-  }
-
-  return false;
-};
-
-  /* =========================================================
-     FILTER + SORT PRODUCTS
-  ========================================================= */
-
-  const filteredProducts = useMemo(() => {
-    let filtered = Array.isArray(products) ? [...products] : [];
-
-    /* -------------------------------------------------------
-       ACTIVE PRODUCTS ONLY
-    ------------------------------------------------------- */
-
-    filtered = filtered.filter((product) => product?.isActive !== false);
-
-    /* -------------------------------------------------------
-       SEARCH
-    ------------------------------------------------------- */
-
-    const query = searchQuery.trim().toLowerCase();
-
-    if (query) {
-      filtered = filtered.filter((product) =>
-        getProductText(product).includes(query),
-      );
-    }
-
-    /* -------------------------------------------------------
-       CATEGORY
-    ------------------------------------------------------- */
-    if (selectedCategory !== "All") {
-  const category = selectedCategory.trim().toLowerCase();
-
-  filtered = filtered.filter((product) => {
-    const productCategory = getProductCategory(product);
-
-    return (
-      productCategory === category ||
-      productCategory === `${category} jewellery` ||
-      productCategory === `${category} jewelry`
-    );
-  });
-}
-
-    /* -------------------------------------------------------
-       COLLECTION
-    ------------------------------------------------------- */
-
-    if (selectedCollection !== "All") {
-      const collection = selectedCollection.trim().toLowerCase();
-
-      filtered = filtered.filter((product) => {
-        /* TOP PICKS */
-
-        if (collection === "top picks") {
-          return product?.isFeatured === true;
-        }
-
-        /* BEST SELLERS */
-
-        if (collection === "best sellers") {
-          return product?.isBestSeller === true;
-        }
-
-        /* NEW COLLECTION */
-
-        if (collection === "new collection") {
-          return productCollectionMatches(product, "new collection");
-        }
-
-        /* NORMAL COLLECTION */
-
-        return productCollectionMatches(product, collection);
-      });
-    }
-
-    /* -------------------------------------------------------
-       SORT
-    ------------------------------------------------------- */
-
-    if (sortBy === "low") {
-      filtered.sort((a, b) => Number(a?.price || 0) - Number(b?.price || 0));
-    }
-
-    if (sortBy === "high") {
-      filtered.sort((a, b) => Number(b?.price || 0) - Number(a?.price || 0));
-    }
-
-    if (sortBy === "name") {
-      filtered.sort((a, b) =>
-        String(a?.name || "").localeCompare(String(b?.name || "")),
-      );
-    }
-
-    /* -------------------------------------------------------
-       TOP RATED
-    ------------------------------------------------------- */
-
-    if (sortBy === "rating") {
-      filtered.sort((a, b) => getProductRating(b) - getProductRating(a));
-    }
-
-    return filtered;
-  }, [products, searchQuery, selectedCategory, selectedCollection, sortBy]);
-
-  /* =========================================================
-     CATEGORY CHANGE
-  ========================================================= */
 
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
-
-    const nextParams = new URLSearchParams(searchParams);
-
-    if (category === "All") {
-      nextParams.delete("category");
-    } else {
-      nextParams.set("category", category);
-    }
-
-    setSearchParams(nextParams);
-
-    setMobileFiltersOpen(false);
+    updateParams({ category });
   };
-
-  /* =========================================================
-     COLLECTION CHANGE
-  ========================================================= */
 
   const handleCollectionChange = (collection) => {
     setSelectedCollection(collection);
-
-    const nextParams = new URLSearchParams(searchParams);
-
-    if (collection === "All") {
-      nextParams.delete("collection");
-    } else {
-      nextParams.set("collection", collection);
-    }
-
-    setSearchParams(nextParams);
-
-    setMobileFiltersOpen(false);
+    updateParams({ collection });
   };
-
-  /* =========================================================
-     SEARCH
-  ========================================================= */
-
-  const handleSearchSubmit = (event) => {
-    event.preventDefault();
-
-    const query = searchQuery.trim();
-
-    const nextParams = new URLSearchParams(searchParams);
-
-    if (query) {
-      nextParams.set("search", query);
-    } else {
-      nextParams.delete("search");
-    }
-
-    setSearchParams(nextParams);
-  };
-
-  /* =========================================================
-     SORT
-  ========================================================= */
 
   const handleSortChange = (value) => {
     setSortBy(value);
-
-    const nextParams = new URLSearchParams(searchParams);
-
-    if (value === "default") {
-      nextParams.delete("sort");
-    } else {
-      nextParams.set("sort", value);
-    }
-
-    setSearchParams(nextParams);
+    updateParams({ sort: value });
   };
 
-  /* =========================================================
-     CLEAR SEARCH
-  ========================================================= */
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    updateParams({ search: searchQuery.trim() });
+  };
 
   const clearSearch = () => {
     setSearchQuery("");
-
-    const nextParams = new URLSearchParams(searchParams);
-
-    nextParams.delete("search");
-
-    setSearchParams(nextParams);
+    updateParams({ search: "" });
   };
-
-  /* =========================================================
-     CLEAR FILTERS
-  ========================================================= */
 
   const clearAllFilters = () => {
     setSearchQuery("");
     setSelectedCategory("All");
     setSelectedCollection("All");
     setSortBy("default");
-
     setSearchParams({});
   };
-
-  /* =========================================================
-     FILTER STATUS
-  ========================================================= */
 
   const hasFilters =
     searchQuery.trim() !== "" ||
@@ -468,468 +427,366 @@ const Shop = () => {
     selectedCollection !== "All" ||
     sortBy !== "default";
 
-  /* =========================================================
-     RENDER
-  ========================================================= */
+  const filteredProducts = useMemo(() => {
+    let result = Array.isArray(products)
+      ? products.filter((product) => product?.isActive !== false)
+      : [];
+
+    const query = searchQuery.trim().toLowerCase();
+
+    if (query) {
+      result = result.filter((product) =>
+        getProductText(product).includes(query)
+      );
+    }
+
+    if (selectedCategory !== "All") {
+      const category = selectedCategory.trim().toLowerCase();
+
+      result = result.filter((product) => {
+        const actual = getProductCategory(product);
+
+        return (
+          actual === category ||
+          actual === `${category} jewellery` ||
+          actual === `${category} jewelry`
+        );
+      });
+    }
+
+    if (selectedCollection !== "All") {
+      const collection = selectedCollection.trim().toLowerCase();
+
+      result = result.filter((product) => {
+        if (collection === "top picks") {
+          return product?.isFeatured === true;
+        }
+
+        if (collection === "best sellers") {
+          return (
+            product?.isBestSeller === true ||
+            product?.bestseller === true
+          );
+        }
+
+        if (collection === "new collection") {
+          return collectionMatches(product, "new collection");
+        }
+
+        return collectionMatches(product, collection);
+      });
+    }
+
+    if (sortBy === "low") {
+      result.sort((a, b) => Number(a?.price || 0) - Number(b?.price || 0));
+    } else if (sortBy === "high") {
+      result.sort((a, b) => Number(b?.price || 0) - Number(a?.price || 0));
+    } else if (sortBy === "name") {
+      result.sort((a, b) =>
+        String(a?.name || "").localeCompare(String(b?.name || ""))
+      );
+    } else if (sortBy === "rating") {
+      result.sort((a, b) => getProductRating(b) - getProductRating(a));
+    }
+
+    return result;
+  }, [
+    products,
+    searchQuery,
+    selectedCategory,
+    selectedCollection,
+    sortBy,
+  ]);
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#FCF8F6] text-[#352529]">
-      {/* =====================================================
-          HERO
-      ===================================================== */}
+    <main className="min-h-screen overflow-hidden bg-[#F8F8F4] text-[#244535]">
 
-      <section className="relative overflow-hidden px-5 pb-12 pt-28 sm:px-6 sm:pb-16 sm:pt-36 md:px-10 md:pt-40 lg:px-16 lg:pb-20">
-        <div className="pointer-events-none absolute -left-40 top-20 h-64 w-64 rounded-full bg-[#F1DCE2]/50 blur-3xl sm:h-80 sm:w-80" />
+      {/* RESPONSIVE HERO */}
+      <section className="relative isolate overflow-hidden px-4 pb-12 pt-28 sm:px-8 sm:pb-16 sm:pt-32 lg:px-12 lg:pb-20 lg:pt-36">
+        {/* Background image */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 -z-8 bg-cover bg-[center_65%] bg-no-repeat sm:bg-center"
+          style={{ backgroundImage: "url('/assets/bg-100.png')" }}
+        />
 
-        <div className="pointer-events-none absolute -right-32 top-10 h-72 w-72 rounded-full bg-[#E9DCC9]/40 blur-3xl sm:h-96 sm:w-96" />
+        {/* Background overlay */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 -z-10 bg-[#F8F8F4]/55 sm:bg-[#F8F8F4]/70 lg:bg-[#F8F8F4]/80"
+        />
 
-        <div className="pointer-events-none absolute left-1/2 top-32 h-44 w-44 -translate-x-1/2 rounded-full border border-[#C7A45B]/10 sm:h-56 sm:w-56" />
+        {/* Decorative gradients */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-20 top-10 -z-10 h-48 w-48 rounded-full bg-[#DCE7D9]/70 blur-3xl sm:h-80 sm:w-80"
+        />
 
-        <div className="relative mx-auto max-w-7xl">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-20 bottom-0 -z-10 h-48 w-48 rounded-full bg-[#EAE2CD]/60 blur-3xl sm:h-80 sm:w-80"
+        />
+
+        <div className="mx-auto w-full max-w-7xl">
           <ScrollReveal>
-            <div className="mx-auto max-w-3xl text-center">
-              <div className="mb-4 flex items-center justify-center gap-2 sm:mb-5 sm:gap-3">
-                <span className="h-px w-6 bg-[#C7A45B] sm:w-8" />
-
+            <div className="mx-auto flex w-full max-w-4xl flex-col items-center text-center">
+              {/* Eyebrow */}
+              <div className="mb-5 flex items-center justify-center gap-2 sm:gap-3">
+                <span className="h-px w-6 bg-[#B99A55] sm:w-10" />
                 <Sparkles
-                  size={13}
-                  strokeWidth={1.3}
-                  className="text-[#C7A45B]"
+                  size={14}
+                  className="shrink-0 text-[#B99A55]"
                 />
 
-                <p className="text-[8px] font-semibold uppercase tracking-[0.24em] text-[#9A7350] sm:text-[9px] sm:tracking-[0.32em]">
-                  YAMA FLYS JEWELLERY
+                <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#244535] sm:text-[10px] sm:tracking-[0.28em]">
+                  YAMA FLAYS JEWELLERY
                 </p>
 
-                <span className="h-px w-6 bg-[#C7A45B] sm:w-8" />
+                <span className="h-px w-6 bg-[#B99A55] sm:w-10" />
               </div>
 
-              <h1 className="font-serif text-[2.8rem] leading-[1.02] tracking-[-0.03em] text-[#352529] sm:text-6xl md:text-7xl">
+              <p className="mb-3 max-w-full text-[9px] uppercase tracking-[0.18em] text-[#718176] sm:text-[10px] sm:tracking-[0.28em]">
+                A little beauty, a lasting memory
+              </p>
+
+              {/* Responsive heading */}
+              <h1 className="w-full font-serif text-4xl font-medium leading-[1.08] tracking-tight text-[#244535] min-[400px]:text-5xl sm:text-7xl md:text-8xl">
                 Find something
-                <span className="block italic text-[#B67888]">beautiful.</span>
+                <span className="mt-2 block italic text-[#52745B]">
+                  beautiful.
+                </span>
               </h1>
 
-              <p className="mx-auto mt-5 max-w-xl text-[13px] leading-6 text-[#817276] sm:mt-6 sm:text-base sm:leading-7">
-                Discover elegant jewellery collections created to make everyday
-                moments and special occasions feel extraordinary.
+              {/* Responsive description */}
+              <p className="mx-auto mt-5 w-full max-w-xl px-1 text-sm font-medium leading-6 text-[#53685A] sm:mt-6 sm:text-base sm:leading-7">
+                Discover beautiful bangles and jewellery for everyday
+                elegance, celebrations, and the moments you want to remember.
               </p>
 
-              <div className="mx-auto mt-7 h-px w-12 bg-[#C7A45B] sm:mt-8 sm:w-14" />
+              {/* CTA */}
+              <button
+                type="button"
+                onClick={() =>
+                  document.getElementById("shop-products")?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  })
+                }
+                className="group mt-7 inline-flex max-w-full items-center justify-center gap-3 border-b border-[#B99A55]/70 pb-2 text-center text-[9px] font-bold uppercase tracking-[0.14em] text-[#244535] transition-colors hover:text-[#66866A] sm:text-[10px] sm:tracking-[0.18em]"
+              >
+                Explore the collection
+                <ArrowRight
+                  size={14}
+                  className="shrink-0 transition-transform group-hover:translate-x-1"
+                />
+              </button>
+
+              <div className="mt-8 h-px w-12 bg-[#B99A55] sm:mt-10" />
             </div>
           </ScrollReveal>
         </div>
       </section>
+      {/* PRODUCTS HEADING */}
 
-      {/* =====================================================
-          CATEGORIES
-      ===================================================== */}
+{/* PREMIUM PRODUCTS HEADING */}
+<section className="relative overflow-hidden px-5 pb-8 pt-12 sm:px-8 sm:pb-10 sm:pt-16 lg:px-12">
+  <div className="mx-auto max-w-7xl text-center">
 
-      <section className="relative px-5 sm:px-6 md:px-10 lg:px-16">
-        <div className="mx-auto max-w-7xl">
-          <ScrollReveal delay={80}>
-            <div className="mb-6 text-center sm:mb-7">
-              <p className="text-[8px] font-semibold uppercase tracking-[0.25em] text-[#C7A45B] sm:text-[9px]">
-                Shop Jewellery
+    {/* Eyebrow */}
+    <div className="mb-4 flex items-center justify-center gap-3">
+      <span className="h-px w-8 bg-[#B99A55] sm:w-12" />
+
+      <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#96763A] sm:text-xs">
+        Crafted With Love
+      </p>
+
+      <span className="h-px w-8 bg-[#B99A55] sm:w-12" />
+    </div>
+
+    {/* Main Heading */}
+    <h2 className="font-serif text-3xl font-semibold leading-tight tracking-[-0.025em] text-[#173D2B] sm:text-4xl md:text-5xl lg:text-[3.5rem]">
+      Discover Our
+      <span className="mt-1 block font-normal italic text-[#64836B]">
+        Beautiful Collection
+      </span>
+    </h2>
+
+    {/* Description */}
+    <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-[#68796C] sm:text-base sm:leading-8">
+      Explore handcrafted bangles and timeless designs,
+      thoughtfully chosen to make every moment special.
+    </p>
+
+    {/* Decorative Accent */}
+    <div className="mt-6 flex items-center justify-center gap-2">
+      <span className="h-1 w-1 rounded-full bg-[#B99A55]" />
+      <span className="h-px w-10 bg-[#B99A55]/70" />
+      <span className="h-1.5 w-1.5 rotate-45 border border-[#B99A55]" />
+      <span className="h-px w-10 bg-[#B99A55]/70" />
+      <span className="h-1 w-1 rounded-full bg-[#B99A55]" />
+    </div>
+
+  </div>
+</section>
+
+{/* PRODUCTS TOOLBAR */}
+<section
+  id="shop-products"
+  className="scroll-mt-24 px-5 pt-7 sm:px-8 sm:pt-10 lg:px-12"
+>
+  <div className="mx-auto max-w-7xl">
+    <ScrollReveal>
+      <div className="border-y border-[#DCE3DA] py-4 sm:py-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+          {/* PRODUCT COUNT */}
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E5D8B8] bg-[#F5F1E5]">
+              <Gem
+                size={17}
+                strokeWidth={1.5}
+                className="text-[#B99A55]"
+              />
+            </div>
+
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#244535]">
+                Our Collection
               </p>
 
-              <h2 className="mt-2 font-serif text-[1.8rem] text-[#352529] sm:text-4xl">
-                Explore by category
-              </h2>
-            </div>
-          </ScrollReveal>
-
-          <ScrollReveal delay={120}>
-            <div className="overflow-x-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <div className="flex min-w-max items-center justify-start gap-2 px-1 sm:justify-center md:gap-3">
-                {jewelleryCategories.map((category) => {
-                  const active = selectedCategory === category.name;
-
-                  const Icon = category.icon;
-
-                  return (
-                    <button
-                      key={category.name}
-                      type="button"
-                      onClick={() => handleCategoryChange(category.name)}
-                      className={`
-                        group
-                        flex
-                        min-h-[42px]
-                        items-center
-                        gap-2
-                        rounded-full
-                        border
-                        px-4
-                        py-2.5
-                        text-[8px]
-                        font-semibold
-                        uppercase
-                        tracking-[0.13em]
-                        transition-all
-                        duration-300
-                        sm:px-6
-                        sm:py-3
-                        sm:text-[9px]
-                        ${
-                          active
-                            ? "border-[#352529] bg-[#352529] text-white shadow-[0_10px_25px_rgba(53,37,41,0.14)]"
-                            : "border-[#E6D7D9] bg-white text-[#5D4A4F] hover:-translate-y-0.5 hover:border-[#C7A45B]/50"
-                        }
-                      `}
-                    >
-                      <Icon
-                        size={13}
-                        strokeWidth={1.4}
-                        className={active ? "text-[#D9B86A]" : "text-[#A06D79]"}
-                      />
-
-                      {category.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* =====================================================
-          COLLECTION CARDS
-      ===================================================== */}
-
-      <section className="px-5 pt-10 sm:px-6 sm:pt-12 md:px-10 md:pt-16 lg:px-16">
-        <div className="mx-auto max-w-7xl">
-          <ScrollReveal>
-            <div className="mb-6 flex flex-col gap-3 sm:mb-7 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Sparkles
-                    size={14}
-                    strokeWidth={1.3}
-                    className="text-[#C7A45B]"
-                  />
-
-                  <p className="text-[8px] font-semibold uppercase tracking-[0.24em] text-[#9A7350]">
-                    YAMA FLYS
-                  </p>
-                </div>
-
-                <h2 className="mt-2 font-serif text-[1.8rem] text-[#352529] sm:text-4xl">
-                  Explore our collections
-                </h2>
-              </div>
-
-              <p className="max-w-md text-[13px] leading-6 text-[#817276] sm:text-sm sm:text-right">
-                From everyday elegance to wedding sparkle, discover jewellery
-                for every beautiful occasion.
+              <p className="mt-1 text-[11px] text-[#718176]">
+                {loading
+                  ? "Finding your favourites..."
+                  : `${filteredProducts.length} ${
+                      filteredProducts.length === 1 ? "piece" : "pieces"
+                    } available`}
               </p>
+
+              {(selectedCategory !== "All" ||
+                selectedCollection !== "All") && (
+                <p className="mt-1 text-[10px] text-[#52745B]">
+                  {[selectedCategory, selectedCollection]
+                    .filter((value) => value !== "All")
+                    .join(" · ")}
+                </p>
+              )}
             </div>
-          </ScrollReveal>
+          </div>
 
-          <ScrollReveal delay={100}>
-            <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-4">
-              {[
-                {
-                  title: "New Collection",
-                  label: "Fresh",
-                  icon: Sparkles,
-                  bg: "bg-[#F0DFE3]",
-                  color: "text-[#A06D79]",
-                },
-                {
-                  title: "Top Picks",
-                  label: "Curated",
-                  icon: Star,
-                  bg: "bg-[#EEE7D8]",
-                  color: "text-[#B18A28]",
-                },
-                {
-                  title: "Wedding",
-                  label: "Special",
-                  icon: Crown,
-                  bg: "bg-[#E9DDE5]",
-                  color: "text-[#A06D79]",
-                },
-                {
-                  title: "Festive",
-                  label: "Celebrate",
-                  icon: Gem,
-                  bg: "bg-[#E8E0D1]",
-                  color: "text-[#B18A28]",
-                },
-              ].map((item) => {
-                const Icon = item.icon;
+          {/* SORT + FILTERS */}
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:gap-3">
 
-                return (
-                  <button
-                    key={item.title}
-                    type="button"
-                    onClick={() => handleCollectionChange(item.title)}
-                    className={`group relative min-h-[155px] overflow-hidden rounded-[1.35rem] ${item.bg} p-4 text-left transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_45px_rgba(73,45,48,0.10)] sm:min-h-[210px] sm:p-5`}
-                  >
-                    <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/40 blur-2xl" />
+            {/* SORT DROPDOWN */}
+            <div className="relative min-w-0 flex-1 sm:flex-none">
+              <select
+                value={sortBy}
+                onChange={(event) => handleSortChange(event.target.value)}
+                aria-label="Sort products"
+                className="h-11 w-full appearance-none rounded-full border border-[#DCE3DA] bg-white pl-4 pr-10 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#244535] outline-none transition hover:border-[#B99A55] focus:border-[#B99A55] sm:w-[195px]"
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
 
-                    <Icon
-                      size={20}
-                      strokeWidth={1.2}
-                      className={`relative ${item.color}`}
-                    />
-
-                    <div className="absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-5 sm:right-5">
-                      <p
-                        className={`text-[7px] font-semibold uppercase tracking-[0.16em] ${item.color}`}
-                      >
-                        {item.label}
-                      </p>
-
-                      <h3 className="mt-1 font-serif text-[1.25rem] text-[#352529] sm:text-2xl">
-                        {item.title}
-                      </h3>
-
-                      <div className="mt-2.5 flex items-center gap-1.5 text-[7px] font-semibold uppercase tracking-[0.12em] text-[#6B555B]">
-                        Discover
-                        <ArrowRight
-                          size={12}
-                          className="transition-transform group-hover:translate-x-1"
-                        />
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
+              <ChevronDown
+                size={14}
+                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#718176]"
+              />
             </div>
-          </ScrollReveal>
+
+            {/* FILTER BUTTON */}
+            <button
+              type="button"
+              onClick={() => setMobileFiltersOpen(true)}
+              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full border border-[#DCE3DA] bg-white px-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#244535] transition duration-300 hover:border-[#244535] hover:bg-[#244535] hover:text-white sm:px-5"
+            >
+              <SlidersHorizontal size={14} />
+              Filters
+            </button>
+
+            {/* CLEAR FILTERS */}
+            {hasFilters && (
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                className="w-full py-1 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-[#718176] underline underline-offset-4 transition hover:text-[#244535] sm:w-auto sm:px-1"
+              >
+                Clear all
+              </button>
+            )}
+
+          </div>
         </div>
-      </section>
+      </div>
+    </ScrollReveal>
+  </div>
+ </section>
 
-      {/* =====================================================
-          COLLECTION FILTERS
-      ===================================================== */}
 
-      <section className="relative px-5 pt-10 sm:px-6 sm:pt-12 md:px-10 lg:px-16">
+
+      {/* PRODUCTS */}
+      <section className="px-5 py-9 sm:px-8 sm:py-12 lg:px-12 lg:py-16">
         <div className="mx-auto max-w-7xl">
-          <ScrollReveal>
-            <div className="overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <div className="flex min-w-max items-center justify-start gap-2 px-1 sm:justify-center md:gap-3">
-                {collectionFilters.map((collection) => {
-                  const active = selectedCollection === collection.name;
-
-                  return (
-                    <button
-                      key={collection.name}
-                      type="button"
-                      onClick={() => handleCollectionChange(collection.name)}
-                      className={`
-                        min-h-[40px]
-                        rounded-full
-                        border
-                        px-4
-                        py-2.5
-                        text-[8px]
-                        font-semibold
-                        uppercase
-                        tracking-[0.13em]
-                        transition-all
-                        duration-300
-                        sm:px-6
-                        sm:py-3
-                        sm:text-[9px]
-                        ${
-                          active
-                            ? "border-[#B67888] bg-[#B67888] text-white"
-                            : "border-[#E6D7D9] bg-white text-[#5D4A4F] hover:border-[#B67888]/50"
-                        }
-                      `}
-                    >
-                      {collection.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-  {/* =====================================================
-          TOOLBAR
-      ===================================================== */}
-
-      <section className="relative px-5 pt-8 sm:px-6 sm:pt-10 md:px-10 md:pt-12 lg:px-16">
-        <div className="mx-auto max-w-7xl">
-          <ScrollReveal delay={120}>
-            <div className="border-y border-[#E8DCDD] py-4 sm:py-5">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                {/* RESULT */}
-
-                <div>
-                  <div className="flex items-center gap-3">
-                    <Gem
-                      size={14}
-                      strokeWidth={1.3}
-                      className="text-[#C7A45B]"
-                    />
-
-                    <p className="text-[8px] font-semibold uppercase tracking-[0.2em] text-[#8B7277] sm:text-[9px]">
-                      {filteredProducts.length}{" "}
-                      {filteredProducts.length === 1 ? "piece" : "pieces"}{" "}
-                      available
-                    </p>
-                  </div>
-
-                  {(selectedCategory !== "All" ||
-                    selectedCollection !== "All") && (
-                    <p className="mt-1 pl-6 text-[11px] text-[#B67888]">
-                      {selectedCategory !== "All" && selectedCategory}
-
-                      {selectedCategory !== "All" &&
-                        selectedCollection !== "All" &&
-                        " · "}
-
-                      {selectedCollection !== "All" && selectedCollection}
-                    </p>
-                  )}
-                </div>
-
-                {/* CONTROLS */}
-
-                <div className="flex flex-col gap-2.5 sm:flex-row sm:gap-3">
-                  {/* SEARCH */}
-
-                  <form
-                    onSubmit={handleSearchSubmit}
-                    className="flex h-11 min-w-0 flex-1 items-center rounded-full border border-[#E2D4D7] bg-white px-3.5 transition-all focus-within:border-[#C7A45B]"
-                  >
-                    <Search
-                      size={15}
-                      strokeWidth={1.7}
-                      className="shrink-0 text-[#9A858A]"
-                    />
-
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(event) => setSearchQuery(event.target.value)}
-                      placeholder="Search jewellery..."
-                      className="min-w-0 flex-1 bg-transparent px-2.5 text-[12px] text-[#352529] outline-none placeholder:text-[#B3A5A8]"
-                    />
-
-                    {searchQuery && (
-                      <button
-                        type="button"
-                        onClick={clearSearch}
-                        aria-label="Clear search"
-                        className="flex h-7 w-7 items-center justify-center rounded-full text-[#8B7277] hover:bg-[#F6ECEE]"
-                      >
-                        <X size={13} />
-                      </button>
-                    )}
-                  </form>
-
-                  {/* SORT */}
-
-                  <div className="relative">
-                    <select
-                      value={sortBy}
-                      onChange={(event) => handleSortChange(event.target.value)}
-                      className="h-11 w-full appearance-none rounded-full border border-[#E2D4D7] bg-white pl-5 pr-10 text-[8px] font-semibold uppercase tracking-[0.12em] text-[#514047] outline-none sm:w-[200px]"
-                    >
-                      <option value="default">Sort: Featured</option>
-
-                      <option value="low">Price: Low to High</option>
-
-                      <option value="high">Price: High to Low</option>
-
-                      <option value="name">Name: A to Z</option>
-
-                      <option value="rating">Top Rated</option>
-                    </select>
-
-                    <ChevronDown
-                      size={14}
-                      className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#8B7277]"
-                    />
-                  </div>
-
-                  {/* MOBILE FILTER */}
-
-                  <button
-                    type="button"
-                    onClick={() => setMobileFiltersOpen(true)}
-                    className="flex h-11 items-center justify-center gap-2 rounded-full border border-[#E2D4D7] bg-white px-5 text-[8px] font-semibold uppercase tracking-[0.12em] text-[#514047] lg:hidden"
-                  >
-                    <SlidersHorizontal size={14} />
-                    Filters
-                  </button>
-                </div>
-              </div>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* =====================================================
-          PRODUCT GRID
-      ===================================================== */}
-
-      <section className="px-5 py-9 sm:px-6 sm:py-12 md:px-10 md:py-16 lg:px-16">
-        <div className="mx-auto max-w-7xl">
-          {/* LOADING */}
-
           {loading && (
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:gap-x-5 sm:gap-y-9 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6 lg:gap-y-10">
               {Array.from({ length: 8 }).map((_, index) => (
                 <div
                   key={index}
-                  className="overflow-hidden rounded-[1.25rem] bg-white"
+                  className="overflow-hidden rounded-2xl border border-[#E6EAE2] bg-white"
                 >
-                  <div className="aspect-[4/5] animate-pulse bg-[#F0E7E8]" />
+                  <div className="aspect-[4/5] animate-pulse bg-[#EDF1E9]" />
 
                   <div className="space-y-3 p-4">
-                    <div className="h-3 w-2/3 animate-pulse rounded-full bg-[#F0E7E8]" />
-
-                    <div className="h-4 w-1/2 animate-pulse rounded-full bg-[#F0E7E8]" />
-
-                    <div className="h-3 w-1/3 animate-pulse rounded-full bg-[#F0E7E8]" />
+                    <div className="h-3 w-2/3 animate-pulse rounded-full bg-[#EDF1E9]" />
+                    <div className="h-4 w-1/2 animate-pulse rounded-full bg-[#EDF1E9]" />
+                    <div className="h-3 w-1/3 animate-pulse rounded-full bg-[#EDF1E9]" />
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          {/* ERROR */}
-
           {!loading && error && (
-            <ScrollReveal>
-              <div className="mx-auto max-w-xl rounded-[1.5rem] border border-[#E8DCDD] bg-white px-6 py-12 text-center shadow-[0_20px_60px_rgba(73,45,48,0.06)]">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#FCF5F7]">
-                  <ShoppingBag
-                    size={27}
-                    strokeWidth={1.2}
-                    className="text-[#B67888]"
-                  />
-                </div>
-
-                <p className="mt-6 text-[8px] font-semibold uppercase tracking-[0.25em] text-[#C7A45B]">
-                  Something went wrong
-                </p>
-
-                <h2 className="mt-3 font-serif text-2xl text-[#352529] sm:text-4xl">
-                  Products couldn't load.
-                </h2>
-
-                <p className="mx-auto mt-4 max-w-sm text-[13px] leading-6 text-[#817276]">
-                  {error}
-                </p>
+            <div className="mx-auto max-w-xl rounded-[1.5rem] border border-[#DCE3DA] bg-white px-6 py-12 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#EDF1E9]">
+                <ShoppingBag
+                  size={27}
+                  strokeWidth={1.2}
+                  className="text-[#52745B]"
+                />
               </div>
-            </ScrollReveal>
+
+              <p className="mt-6 text-[9px] font-semibold uppercase tracking-[0.22em] text-[#B99A55]">
+                Something went wrong
+              </p>
+
+              <h2 className="mt-3 font-serif text-3xl text-[#244535]">
+                Products couldn't load.
+              </h2>
+
+              <p className="mx-auto mt-4 max-w-sm text-sm leading-6 text-[#718176]">
+                {error}
+              </p>
+
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="mt-6 rounded-full bg-[#244535] px-6 py-3 text-[9px] font-semibold uppercase tracking-[0.15em] text-white transition hover:bg-[#355B43]"
+              >
+                Try again
+              </button>
+            </div>
           )}
 
-          {/* PRODUCTS */}{!loading && !error && filteredProducts.length > 0 && (
-            <div className="grid grid-cols-2 gap-x-2.5 gap-y-6 sm:gap-x-5 sm:gap-y-8 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6 lg:gap-y-10">
+          {!loading && !error && filteredProducts.length > 0 && (
+            <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-5 sm:gap-y-9 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6 lg:gap-y-10">
               {filteredProducts.map((product, index) => (
                 <ScrollReveal
-                  key={product._id}
-                  delay={Math.min(index * 50, 300)}
+                  key={product._id || product.id || product.name}
+                  delay={Math.min(index * 40, 240)}
                 >
                   <ProductCard product={product} />
                 </ScrollReveal>
@@ -937,85 +794,79 @@ const Shop = () => {
             </div>
           )}
 
-          {/* NO PRODUCTS */}
-
           {!loading && !error && filteredProducts.length === 0 && (
-            <ScrollReveal>
-              <div className="mx-auto max-w-xl rounded-[1.5rem] border border-[#E8DCDD] bg-white px-6 py-12 text-center shadow-[0_20px_60px_rgba(73,45,48,0.06)] sm:px-12 sm:py-16">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#FCF5F7]">
-                  <ShoppingBag
-                    size={27}
-                    strokeWidth={1.2}
-                    className="text-[#B67888]"
-                  />
-                </div>
-
-                <p className="mt-6 text-[8px] font-semibold uppercase tracking-[0.25em] text-[#C7A45B]">
-                  Nothing found
-                </p>
-
-                <h2 className="mt-3 font-serif text-2xl text-[#352529] sm:text-4xl">
-                  Let's try something else.
-                </h2>
-
-                <p className="mx-auto mt-4 max-w-sm text-[13px] leading-6 text-[#817276]">
-                  We couldn't find any jewellery matching your current search or
-                  filters.
-                </p>
-
-                <button
-                  type="button"
-                  onClick={clearAllFilters}
-                  className="mt-6 inline-flex items-center gap-3 rounded-full bg-[#352529] px-6 py-3.5 text-[8px] font-semibold uppercase tracking-[0.16em] text-white transition-all hover:-translate-y-1 hover:bg-[#4A3439]"
-                >
-                  View All Jewellery
-                  <ArrowRight size={15} strokeWidth={1.4} />
-                </button>
+            <div className="mx-auto max-w-xl rounded-[1.5rem] border border-[#DCE3DA] bg-white px-6 py-12 text-center sm:px-12 sm:py-16">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#EDF1E9]">
+                <ShoppingBag
+                  size={27}
+                  strokeWidth={1.2}
+                  className="text-[#52745B]"
+                />
               </div>
-            </ScrollReveal>
+
+              <p className="mt-6 text-[9px] font-semibold uppercase tracking-[0.22em] text-[#B99A55]">
+                Nothing found
+              </p>
+
+              <h2 className="mt-3 font-serif text-3xl text-[#244535]">
+                Let's try something else.
+              </h2>
+
+              <p className="mx-auto mt-4 max-w-sm text-sm leading-6 text-[#718176]">
+                We couldn't find jewellery matching your current search or filters.
+              </p>
+
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                className="mt-6 inline-flex items-center gap-3 rounded-full bg-[#244535] px-6 py-3.5 text-[9px] font-semibold uppercase tracking-[0.15em] text-white transition hover:-translate-y-0.5 hover:bg-[#355B43]"
+              >
+                View All Jewellery
+                <ArrowRight size={15} />
+              </button>
+            </div>
           )}
         </div>
       </section>
 
-      {/* =====================================================
-          CTA
-      ===================================================== */}
+      {/* BOTTOM CTA */}
+      <section className="relative isolate overflow-hidden border-t border-[#E0E6DC] bg-[#EEF2E9] px-5 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-24 -top-24 -z-10 h-72 w-72 rounded-full bg-white/80 blur-[80px]"
+        />
 
-      <section className="relative overflow-hidden border-t border-[#E8DCDD] bg-[#F4E4E8] px-5 py-12 sm:px-6 sm:py-16 md:px-10 md:py-20 lg:px-16">
         <ScrollReveal>
-          <div className="relative mx-auto flex max-w-5xl flex-col items-center justify-between gap-7 text-center md:flex-row md:text-left">
+          <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-7 text-center md:flex-row md:text-left">
             <div className="max-w-xl">
               <div className="flex items-center justify-center gap-2 md:justify-start">
-                <Sparkles
-                  size={14}
-                  strokeWidth={1.3}
-                  className="text-[#C7A45B]"
-                />
+                <Sparkles size={14} className="text-[#B99A55]" />
 
-                <p className="text-[8px] font-semibold uppercase tracking-[0.25em] text-[#9A7350]">
+                <p className="text-[9px] font-semibold uppercase tracking-[0.24em] text-[#718176]">
                   YAMA FLYS
                 </p>
               </div>
 
-              <h2 className="mt-3 font-serif text-2xl leading-tight text-[#352529] sm:text-4xl">
+              <h2 className="mt-3 font-serif text-3xl leading-tight text-[#244535] sm:text-4xl">
                 A little sparkle can change
-                <span className="italic text-[#B67888]"> the whole look.</span>
+                <span className="block italic text-[#52745B]">
+                  the whole look.
+                </span>
               </h2>
 
-              <p className="mt-4 text-[13px] leading-6 text-[#806D72] sm:text-sm">
-                Explore beautiful jewellery pieces and discover something that
-                feels perfectly yours.
+              <p className="mt-4 text-sm leading-6 text-[#718176]">
+                Discover jewellery that complements your style and makes every
+                occasion feel special.
               </p>
             </div>
 
             <Link
               to="/collections"
-              className="group inline-flex shrink-0 items-center gap-3 rounded-full bg-[#352529] px-6 py-3.5 text-[8px] font-semibold uppercase tracking-[0.16em] text-white shadow-[0_15px_35px_rgba(53,37,41,0.16)] transition-all hover:-translate-y-1 hover:bg-[#4A3439]"
+              className="group inline-flex shrink-0 items-center gap-3 rounded-full bg-[#244535] px-6 py-3.5 text-[9px] font-semibold uppercase tracking-[0.15em] text-white transition hover:-translate-y-0.5 hover:bg-[#355B43]"
             >
               Explore Collections
               <ArrowRight
                 size={15}
-                strokeWidth={1.4}
                 className="transition-transform group-hover:translate-x-1"
               />
             </Link>
@@ -1023,144 +874,19 @@ const Shop = () => {
         </ScrollReveal>
       </section>
 
-      {/* =====================================================
-          MOBILE FILTER DRAWER
-      ===================================================== */}
-
-      {mobileFiltersOpen && (
-        <div className="fixed inset-0 z-[200] lg:hidden">
-          <button
-            type="button"
-            aria-label="Close filters"
-            onClick={() => setMobileFiltersOpen(false)}
-            className="absolute inset-0 bg-[#352529]/35 backdrop-blur-sm"
-          />
-
-          <aside className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-y-auto rounded-t-[1.75rem] bg-[#FFFDFC] px-5 pb-7 pt-5 shadow-[0_-20px_60px_rgba(53,37,41,0.15)]">
-            <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-[#DCCED1]" />
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-[#C7A45B]">
-                  Refine
-                </p>
-
-                <h2 className="mt-1 font-serif text-2xl text-[#352529]">
-                  Shop Jewellery
-                </h2>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setMobileFiltersOpen(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F6ECEE] text-[#352529]"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* CATEGORY */}
-
-            <div className="mt-6">
-              <p className="mb-3 text-[8px] font-semibold uppercase tracking-[0.18em] text-[#9A7350]">
-                Jewellery Type
-              </p>
-
-              <div className="grid gap-2">
-                {jewelleryCategories.map((category) => {
-                  const active = selectedCategory === category.name;
-
-                  return (
-                    <button
-                      key={category.name}
-                      type="button"
-                      onClick={() => handleCategoryChange(category.name)}
-                      className={`flex items-center justify-between rounded-2xl px-4 py-3.5 text-left ${
-                        active
-                          ? "bg-[#352529] text-white"
-                          : "bg-[#F9F2F3] text-[#514047]"
-                      }`}
-                    >
-                      <div>
-                        <p className="font-serif text-base">{category.name}</p>
-
-                        <p
-                          className={`mt-0.5 text-[8px] uppercase tracking-[0.1em] ${
-                            active ? "text-white/60" : "text-[#9A858A]"
-                          }`}
-                        >
-                          {category.description}
-                        </p>
-                      </div>
-
-                      {active && (
-                        <Sparkles size={15} className="text-[#D9B86A]" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* COLLECTION */}
-
-            <div className="mt-6">
-              <p className="mb-3 text-[8px] font-semibold uppercase tracking-[0.18em] text-[#9A7350]">
-                Collections
-              </p>
-
-              <div className="grid grid-cols-2 gap-2">
-                {collectionFilters.map((collection) => {
-                  const active = selectedCollection === collection.name;
-
-                  return (
-                    <button
-                      key={collection.name}
-                      type="button"
-                      onClick={() => handleCollectionChange(collection.name)}
-                      className={`rounded-2xl px-3.5 py-3.5 text-left ${
-                        active
-                          ? "bg-[#B67888] text-white"
-                          : "bg-[#F9F2F3] text-[#514047]"
-                      }`}
-                    >
-                      <p className="font-serif text-sm">{collection.name}</p>
-
-                      <p
-                        className={`mt-1 text-[7px] uppercase tracking-[0.08em] ${
-                          active ? "text-white/65" : "text-[#9A858A]"
-                        }`}
-                      >
-                        {collection.description}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* CLEAR */}
-
-            {hasFilters && (
-              <button
-                type="button"
-                onClick={() => {
-                  clearAllFilters();
-                  setMobileFiltersOpen(false);
-                }}
-                className="mt-5 w-full rounded-full border border-[#DCCED1] bg-white py-3.5 text-[8px] font-semibold uppercase tracking-[0.16em] text-[#6F5B61]"
-              >
-                Clear All Filters
-              </button>
-            )}
-          </aside>
-        </div>
-      )}
+      {/* SIDE FILTER PANEL */}
+      <MobileFilterDrawer
+        open={mobileFiltersOpen}
+        onClose={() => setMobileFiltersOpen(false)}
+        categories={CATEGORIES}
+        collections={COLLECTIONS}
+        selectedCategory={selectedCategory}
+        selectedCollection={selectedCollection}
+        onCategoryChange={handleCategoryChange}
+        onCollectionChange={handleCollectionChange}
+        hasFilters={hasFilters}
+        onClear={clearAllFilters}
+      />
     </main>
   );
-};
-
-export default Shop;
-
-
-
+}

@@ -1,28 +1,126 @@
+
 import { useEffect, useRef, useState } from "react";
 import {
+  ArrowDownRight,
   ArrowRight,
   ArrowUpRight,
-  Sparkles,
-  ShoppingBag,
-  Heart,
   Gem,
+  Heart,
+  ShoppingBag,
+  Sparkles,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const CTA = () => {
-  const sectionRef = useRef(null);
+const NAV_LINKS = [
+  { label: "About Us", to: "/about" },
+  { label: "Contact", to: "/contact" },
+  { label: "Wishlist", to: "/wishlist", icon: Heart },
+  { label: "Cart", to: "/cart" },
+];
 
+const GOLD = "#B99A55";
+const GREEN = "#31543B";
+const LIGHT_GREEN = "#71866C";
+const SMOKE = "#F8F8F5";
+
+const reveal = (visible, delay = 0) => ({
+  className: `transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none ${
+    visible ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"
+  }`,
+  style: { transitionDelay: visible ? `${delay}ms` : "0ms" },
+});
+
+function Eyebrow({ children, light = false }) {
+  return (
+    <p
+      className={`text-[9px] font-semibold uppercase tracking-[0.28em] sm:text-[10px] ${
+        light ? "text-[#71866C]" : "text-[#71866C]"
+      }`}
+    >
+      {children}
+    </p>
+  );
+}
+
+function ActionLink({ to, children, primary = false }) {
+  return (
+    <Link
+      to={to}
+      className={`group inline-flex min-h-[50px] items-center justify-center gap-3 border px-6 py-3 text-[9px] font-semibold uppercase tracking-[0.16em] transition duration-300 hover:-translate-y-0.5 sm:px-7 sm:text-[10px] ${
+        primary
+          ? "border-[#31543B] bg-[#31543B] text-white hover:bg-[#42684A] hover:shadow-lg"
+          : "border-[#31543B]/25 bg-white/60 text-[#31543B] hover:border-[#B99A55] hover:bg-white"
+      }`}
+    >
+      {children}
+      {primary ? (
+        <ArrowRight
+          size={15}
+          className="transition-transform duration-300 group-hover:translate-x-1"
+        />
+      ) : (
+        <ArrowUpRight
+          size={15}
+          className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+        />
+      )}
+    </Link>
+  );
+}
+
+function QuickLinks() {
+  return (
+    <nav aria-label="Quick links" className="flex flex-wrap gap-x-5 gap-y-3">
+      {NAV_LINKS.map(({ label, to, icon: Icon }) => (
+        <Link
+          key={to}
+          to={to}
+          className="inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.14em] text-[#536A55] transition-colors hover:text-[#B99A55]"
+        >
+          {Icon && <Icon size={12} strokeWidth={1.5} />}
+          {label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+function DecorativeOrb() {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute -right-12 top-1/2 flex h-48 w-48 -translate-y-1/2 items-center justify-center rounded-full border border-[#B99A55]/25 sm:-right-16 sm:h-72 sm:w-72 lg:-right-24 lg:h-96 lg:w-96"
+    >
+      <div className="flex h-[72%] w-[72%] items-center justify-center rounded-full border border-[#B99A55]/20">
+        <div className="flex h-[68%] w-[68%] items-center justify-center rounded-full border border-[#31543B]/10">
+          <Gem
+            size={64}
+            strokeWidth={0.65}
+            className="text-[#B99A55]/35 sm:h-20 sm:w-20"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function CTA() {
+  const sectionRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const [mouse, setMouse] = useState({ x: 50, y: 50 });
 
-  /* =========================================================
-     SCROLL REVEAL
-  ========================================================= */
-
   useEffect(() => {
     const section = sectionRef.current;
-
     if (!section) return;
+
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    if (reduceMotion || !("IntersectionObserver" in window)) {
+      setIsVisible(true);
+      return;
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -31,417 +129,202 @@ const CTA = () => {
           observer.disconnect();
         }
       },
-      {
-        threshold: 0.15,
-      },
+      { threshold: 0.12 }
     );
 
     observer.observe(section);
-
     return () => observer.disconnect();
   }, []);
 
-  /* =========================================================
-     MOUSE INTERACTION
-  ========================================================= */
-
   const handleMouseMove = (event) => {
-    const rect = sectionRef.current?.getBoundingClientRect();
+    if (window.matchMedia("(hover: none)").matches) return;
 
+    const rect = sectionRef.current?.getBoundingClientRect();
     if (!rect) return;
 
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-
-    setMouse({ x, y });
+    setMouse({
+      x: ((event.clientX - rect.left) / rect.width) * 100,
+      y: ((event.clientY - rect.top) / rect.height) * 100,
+    });
   };
 
-  const handleMouseLeave = () => {
-    setMouse({ x: 50, y: 50 });
-  };
-
-  /* =========================================================
-     REDUCED MOTION
-  ========================================================= */
-
-  const prefersReducedMotion =
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  const showContent = isVisible || prefersReducedMotion;
+  const resetMouse = () => setMouse({ x: 50, y: 50 });
 
   return (
     <section
       ref={sectionRef}
       onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className="relative overflow-hidden bg-[#120D12] px-5 py-20 sm:px-8 sm:py-24 lg:px-12 lg:py-28"
+      onMouseLeave={resetMouse}
+      className="relative isolate overflow-hidden bg-[#F8F8F5] px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24"
     >
-      {/* =====================================================
-          MOUSE LIGHT
-      ===================================================== */}
-
+      {/* White smoke background */}
       <div
-        className="pointer-events-none absolute inset-0 transition-all duration-1000"
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
         style={{
           background: `
-            radial-gradient(
-              circle at ${mouse.x}% ${mouse.y}%,
-              rgba(155,112,141,0.16),
-              transparent 28%
-            )
+            radial-gradient(circle at ${mouse.x}% ${mouse.y}%, rgba(185,154,85,0.09), transparent 36%),
+            radial-gradient(ellipse at top left, rgba(255,255,255,0.98), transparent 55%),
+            radial-gradient(ellipse at bottom right, rgba(226,234,222,0.55), transparent 60%)
           `,
         }}
       />
 
-      {/* =====================================================
-          AMBIENT LIGHT
-      ===================================================== */}
+      <div className="pointer-events-none absolute -left-40 top-1/4 -z-10 h-96 w-96 rounded-full bg-[#DCE6D9]/50 blur-[100px]" />
 
-      <div className="pointer-events-none absolute -left-52 top-1/3 h-[520px] w-[520px] rounded-full bg-[#704A68]/20 blur-[150px]" />
+      <div className="pointer-events-none absolute -bottom-40 -right-32 -z-10 h-[420px] w-[420px] rounded-full bg-[#E8DDBF]/35 blur-[110px]" />
 
-      <div className="pointer-events-none absolute -right-52 bottom-0 h-[520px] w-[520px] rounded-full bg-[#806047]/10 blur-[150px]" />
-
-      {/* =====================================================
-          DECORATIVE CIRCLE
-      ===================================================== */}
-
-      <div className="pointer-events-none absolute right-[8%] top-16 hidden h-[260px] w-[260px] rounded-full border border-[#B28B52]/10 lg:block" />
-
-      <div className="pointer-events-none absolute right-[11%] top-[5.5rem] hidden h-[200px] w-[200px] rounded-full border border-[#B28B52]/10 lg:block" />
-
-      {/* =====================================================
-          MAIN CONTAINER
-      ===================================================== */}
-
-      <div className="relative mx-auto max-w-7xl">
+      <div className="mx-auto max-w-7xl">
         <div
-          className={`
-            relative overflow-hidden
-            border border-[#B28B52]/20
-            bg-[#1D151D]
-            shadow-[0_35px_100px_rgba(0,0,0,0.45)]
-            transition-all duration-1000
-            ${
-              showContent
-                ? "translate-y-0 opacity-100"
-                : "translate-y-10 opacity-0"
-            }
-          `}
+          {...reveal(isVisible)}
+          className={`relative overflow-hidden border border-[#31543B]/15 bg-white/55 shadow-[0_30px_90px_rgba(49,84,59,0.08)] backdrop-blur-sm ${reveal(isVisible).className}`}
         >
-          {/* =================================================
-              TOP BAR
-          ================================================= */}
-
-          <div className="flex items-center justify-between border-b border-[#B28B52]/15 px-6 py-5 sm:px-10 lg:px-14">
-            <div className="flex items-center gap-3">
-              <span className="h-px w-8 bg-[#B28B52]" />
-
-              <span className="text-[9px] font-semibold uppercase tracking-[0.4em] text-[#B28B52]">
+          {/* Brand bar */}
+          <div className="relative z-10 flex items-center justify-between gap-4 border-b border-[#31543B]/10 px-5 py-5 sm:px-8 lg:px-12">
+            <Link to="/" className="flex items-center gap-3">
+              <Sparkles
+                size={16}
+                strokeWidth={1.3}
+                className="text-[#B99A55]"
+              />
+              <span className="text-[10px] font-medium uppercase tracking-[0.35em] text-[#31543B]">
                 YAMA FLYS
               </span>
-            </div>
+            </Link>
 
-            <div className="flex items-center gap-2 text-[#766875]">
-              <Sparkles size={13} strokeWidth={1.2} />
-
-              <span className="hidden text-[8px] uppercase tracking-[0.25em] sm:block">
-                Jewellery Collection
-              </span>
-            </div>
+            <Eyebrow>Jewellery · Elegance · You</Eyebrow>
           </div>
 
-          {/* =================================================
-              CONTENT GRID
-          ================================================= */}
+          {/* Main layout */}
+          <div className="relative grid lg:grid-cols-[0.8fr_1.2fr]">
+            <DecorativeOrb />
 
-          <div className="grid lg:grid-cols-[0.95fr_1.05fr]">
-            {/* =================================================
-                LEFT EDITORIAL PANEL
-            ================================================= */}
+            {/* Left introduction */}
+            <div className="relative z-10 flex flex-col justify-between border-b border-[#31543B]/10 px-6 py-9 sm:px-9 sm:py-12 lg:border-b-0 lg:border-r lg:px-12 lg:py-14">
+              <div {...reveal(isVisible, 100)}>
+                <Eyebrow>01 / A personal touch</Eyebrow>
 
-            <div className="relative flex min-h-[500px] flex-col justify-between overflow-hidden border-b border-[#B28B52]/15 px-7 py-12 sm:px-10 sm:py-14 lg:border-b-0 lg:border-r lg:px-14 lg:py-16">
-              {/* Vertical line */}
-
-              <div className="pointer-events-none absolute left-6 top-0 h-full w-px bg-gradient-to-b from-transparent via-[#B28B52]/20 to-transparent sm:left-9 lg:left-12" />
-
-              {/* Number */}
-
-              <div
-                className={`
-                  relative pl-5 transition-all duration-700 delay-100
-                  ${
-                    showContent
-                      ? "translate-x-0 opacity-100"
-                      : "-translate-x-5 opacity-0"
-                  }
-                `}
-              >
-                <span className="font-serif text-6xl text-[#B28B52]/20 sm:text-7xl">
-                  01
-                </span>
-
-                <p className="mt-3 text-[9px] uppercase tracking-[0.35em] text-[#766875]">
-                  Discover your style
+                <p className="mt-5 max-w-xs font-serif text-3xl leading-tight text-[#31543B] sm:text-4xl">
+                  Every piece has
+                  <span className="block italic text-[#71866C]">
+                    a little magic.
+                  </span>
                 </p>
               </div>
 
-              {/* Decorative Gem */}
-
               <div
-                className={`
-                  relative mt-14 pl-5 transition-all duration-700 delay-200
-                  ${
-                    showContent
-                      ? "translate-y-0 opacity-100"
-                      : "translate-y-6 opacity-0"
-                  }
-                `}
+                {...reveal(isVisible, 250)}
+                className="my-9 flex items-center gap-4 lg:my-14"
               >
-                <div className="relative flex h-24 w-24 items-center justify-center border border-[#B28B52]/25 bg-[#120D12]">
-                  <div className="absolute inset-2 border border-[#B28B52]/10" />
+                <div className="relative flex h-16 w-16 shrink-0 items-center justify-center border border-[#B99A55]/40 bg-white/70 sm:h-20 sm:w-20">
+                  <div className="absolute inset-2 border border-[#31543B]/10" />
+                  <Gem size={29} strokeWidth={1} className="text-[#B99A55]" />
+                </div>
 
-                  <Gem size={30} strokeWidth={1} className="text-[#D7B778]" />
-
-                  <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[#D7B778]" />
+                <div>
+                  <p className="font-serif text-lg text-[#31543B]">
+                    Made for your moments
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-[#667866]">
+                    From everyday beauty to celebrations.
+                  </p>
                 </div>
               </div>
 
-              {/* Bottom statement */}
-
-              <div
-                className={`
-                  relative mt-16 pl-5 transition-all duration-700 delay-300
-                  ${
-                    showContent
-                      ? "translate-y-0 opacity-100"
-                      : "translate-y-6 opacity-0"
-                  }
-                `}
-              >
-                <p className="max-w-xs font-serif text-2xl leading-tight text-[#EDE4DF] sm:text-3xl">
-                  Jewellery that
-                  <span className="block italic text-[#D7B778]">
-                    feels like you.
-                  </span>
+              <div {...reveal(isVisible, 350)}>
+                <div className="mb-4 h-px w-14 bg-[#B99A55]" />
+                <p className="max-w-xs text-xs leading-6 text-[#536A55]">
+                  Find jewellery that complements your style and makes every
+                  occasion feel a little more special.
                 </p>
-
-                <div className="mt-6 h-px w-16 bg-[#B28B52]" />
               </div>
             </div>
 
-            {/* =================================================
-                RIGHT CONTENT
-            ================================================= */}
-
-            <div className="relative flex items-center px-7 py-14 sm:px-10 sm:py-16 lg:px-16 lg:py-20">
-              {/* Small decorative mark */}
-
-              <div className="absolute right-8 top-8 flex items-center gap-2 opacity-50 sm:right-12 sm:top-12">
-                <span className="h-px w-7 bg-[#B28B52]" />
-                <span className="h-1.5 w-1.5 rounded-full bg-[#D7B778]" />
-              </div>
-
-              <div className="relative w-full max-w-2xl">
-                {/* Eyebrow */}
-
-                <div
-                  className={`
-                    flex items-center gap-3
-                    transition-all duration-700 delay-200
-                    ${
-                      showContent
-                        ? "translate-y-0 opacity-100"
-                        : "translate-y-5 opacity-0"
-                    }
-                  `}
-                >
-                  <Sparkles
-                    size={14}
-                    strokeWidth={1.2}
-                    className="text-[#D7B778]"
-                  />
-
-                  <span className="text-[10px] font-medium uppercase tracking-[0.38em] text-[#B28B52]">
-                    Curated for you
-                  </span>
+            {/* Right CTA */}
+            <div className="relative z-10 flex items-center px-6 py-11 sm:px-9 sm:py-14 lg:px-14 lg:py-16">
+              <div className="relative w-full">
+                <div {...reveal(isVisible, 150)}>
+                  <div className="flex items-center gap-3">
+                    <span className="h-px w-8 bg-[#B99A55]" />
+                    <Eyebrow light>Find your favourites</Eyebrow>
+                  </div>
                 </div>
 
-                {/* Heading */}
-
-                <div
-                  className={`
-                    mt-6 transition-all duration-700 delay-300
-                    ${
-                      showContent
-                        ? "translate-y-0 opacity-100"
-                        : "translate-y-7 opacity-0"
-                    }
-                  `}
-                >
-                  <h2 className="font-serif text-5xl leading-[0.98] text-[#F4EDE5] sm:text-6xl lg:text-7xl">
+                <div {...reveal(isVisible, 250)}>
+                  <h2 className="mt-6 max-w-2xl font-serif text-4xl leading-[1.03] text-[#31543B] sm:text-5xl md:text-6xl lg:text-7xl">
                     Wear your
-                    <span className="block italic text-[#D7B778]">
+                    <span className="mt-1 block italic text-[#71866C]">
                       own story.
                     </span>
                   </h2>
 
-                  <div className="mt-8 flex items-center gap-4">
-                    <div className="h-px w-16 bg-[#B28B52]" />
-
-                    <span className="text-[8px] uppercase tracking-[0.3em] text-[#756879]">
-                      YAMA FLYS
+                  <div className="mt-6 flex items-center gap-3">
+                    <span className="h-px w-12 bg-[#B99A55]/70" />
+                    <span className="text-[8px] uppercase tracking-[0.25em] text-[#71866C]">
+                      YAMA FLYS COLLECTION
                     </span>
                   </div>
                 </div>
 
-                {/* Description */}
-
-                <p
-                  className={`
-                    mt-8 max-w-xl
-                    text-sm leading-7 text-[#BBAEBB]
-                    sm:text-base
-                    transition-all duration-700 delay-[400ms]
-                    ${
-                      showContent
-                        ? "translate-y-0 opacity-100"
-                        : "translate-y-6 opacity-0"
-                    }
-                  `}
-                >
-                  Explore elegant bangles and thoughtfully selected jewellery
-                  pieces designed to complement every celebration, outfit, and
-                  unforgettable moment.
-                </p>
-
-                {/* Buttons */}
-
-                <div
-                  className={`
-                    mt-10 flex flex-col gap-3
-                    sm:flex-row
-                    transition-all duration-700 delay-500
-                    ${
-                      showContent
-                        ? "translate-y-0 opacity-100"
-                        : "translate-y-6 opacity-0"
-                    }
-                  `}
-                >
-                  <Link
-                    to="/shop"
-                    className="group inline-flex min-h-[52px] items-center justify-center gap-3 bg-[#B28B52] px-7 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#160F1C] transition-all duration-300 hover:bg-[#D7B778] hover:shadow-[0_15px_40px_rgba(178,139,82,0.16)]"
-                  >
-                    <ShoppingBag size={15} strokeWidth={1.7} />
-
-                    <span>Shop Bangles</span>
-
-                    <ArrowRight
-                      size={15}
-                      className="transition-transform duration-300 group-hover:translate-x-1"
-                    />
-                  </Link>
-
-                  <Link
-                    to="/collections"
-                    className="group inline-flex min-h-[52px] items-center justify-center gap-3 border border-[#B28B52]/35 bg-transparent px-7 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#EDE4DF] transition-all duration-300 hover:border-[#D7B778] hover:bg-[#B28B52]/10"
-                  >
-                    <span>Explore Collections</span>
-
-                    <ArrowUpRight
-                      size={15}
-                      strokeWidth={1.5}
-                      className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-                    />
-                  </Link>
+                <div {...reveal(isVisible, 350)}>
+                  <p className="mt-7 max-w-xl text-sm leading-7 text-[#536A55] sm:text-base sm:leading-8">
+                    Explore elegant bangles and thoughtfully selected jewellery
+                    designed to complement your outfits, celebrations, and
+                    unforgettable moments.
+                  </p>
                 </div>
 
-                {/* Quick navigation */}
-
                 <div
-                  className={`
-                    mt-10 border-t border-[#B28B52]/15 pt-6
-                    transition-all duration-700 delay-[600ms]
-                    ${
-                      showContent
-                        ? "translate-y-0 opacity-100"
-                        : "translate-y-5 opacity-0"
-                    }
-                  `}
+                  {...reveal(isVisible, 450)}
+                  className="mt-8 flex flex-col gap-3 min-[430px]:flex-row min-[430px]:flex-wrap"
                 >
-                  <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-                    <Link
-                      to="/about"
-                      className="text-[9px] uppercase tracking-[0.18em] text-[#817482] transition-colors hover:text-[#D7B778]"
-                    >
-                      About Us
-                    </Link>
+                  <ActionLink to="/shop" primary>
+                    <ShoppingBag size={15} />
+                    Shop Bangles
+                  </ActionLink>
 
-                    <span className="h-1 w-1 rounded-full bg-[#B28B52]/50" />
-
-                    <Link
-                      to="/contact"
-                      className="text-[9px] uppercase tracking-[0.18em] text-[#817482] transition-colors hover:text-[#D7B778]"
-                    >
-                      Contact
-                    </Link>
-
-                    <span className="h-1 w-1 rounded-full bg-[#B28B52]/50" />
-
-                    <Link
-                      to="/wishlist"
-                      className="inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.18em] text-[#817482] transition-colors hover:text-[#D7B778]"
-                    >
-                      <Heart size={12} strokeWidth={1.4} />
-                      Wishlist
-                    </Link>
-
-                    <span className="h-1 w-1 rounded-full bg-[#B28B52]/50" />
-
-                    <Link
-                      to="/cart"
-                      className="text-[9px] uppercase tracking-[0.18em] text-[#817482] transition-colors hover:text-[#D7B778]"
-                    >
-                      Cart
-                    </Link>
-                  </div>
+                  <ActionLink to="/collections">
+                    Explore Collections
+                  </ActionLink>
                 </div>
 
-                {/* Bottom note */}
+                <div {...reveal(isVisible, 550)} className="mt-9">
+                  <div className="mb-5 h-px bg-[#31543B]/10" />
+                  <QuickLinks />
+                </div>
 
                 <div
-                  className={`
-                    mt-10 flex items-center gap-3
-                    transition-all duration-700 delay-700
-                    ${
-                      showContent
-                        ? "translate-y-0 opacity-100"
-                        : "translate-y-5 opacity-0"
-                    }
-                  `}
+                  {...reveal(isVisible, 650)}
+                  className="mt-8 flex items-center gap-3"
                 >
-                  <div className="h-px flex-1 bg-[#B28B52]/10" />
-
-                  <p className="whitespace-nowrap text-[8px] uppercase tracking-[0.3em] text-[#655B67]">
+                  <span className="h-px flex-1 bg-[#31543B]/10" />
+                  <p className="text-center text-[8px] uppercase tracking-[0.2em] text-[#71866C] sm:text-[9px]">
                     Elegance for every occasion
                   </p>
-
-                  <div className="h-px flex-1 bg-[#B28B52]/10" />
+                  <span className="h-px flex-1 bg-[#31543B]/10" />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* =================================================
-              BOTTOM BORDER
-          ================================================= */}
+          {/* Bottom edge */}
+          <div className="h-px bg-gradient-to-r from-transparent via-[#B99A55]/60 to-transparent" />
+        </div>
 
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-[#B28B52]/30 to-transparent" />
+        {/* Bottom navigation */}
+        <div className="mt-7 flex justify-center">
+          <Link
+            to="/shop"
+            className="group inline-flex items-center gap-2 text-[9px] uppercase tracking-[0.22em] text-[#536A55] transition-colors hover:text-[#B99A55]"
+          >
+            Find your next favourite
+            <ArrowDownRight
+              size={13}
+              className="transition-transform group-hover:translate-x-0.5 group-hover:translate-y-0.5"
+            />
+          </Link>
         </div>
       </div>
     </section>
   );
-};
-
-export default CTA;
+}

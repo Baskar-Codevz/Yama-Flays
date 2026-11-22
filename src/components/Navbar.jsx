@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+
+  import { useCallback, useEffect, useRef, useState } from "react";
+
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Search,
@@ -7,12 +9,42 @@ import {
   ShoppingBag,
   Menu,
   X,
+  Mic,
   Sparkles,
   ArrowRight,
 } from "lucide-react";
 
 import { useCart } from "../Context/CartContext";
 import { useWishlist } from "../Context/WishlistContext";
+import { useAuth } from "../Context/AuthContext";
+
+const NAV_LINKS = [
+  { label: "Home", href: "/" },
+  { label: "Shop", href: "/shop" },
+  { label: "Collections", href: "/collections" },
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
+];
+
+const COLORS = {
+  green: "#10271E",
+  gold: "#D9C28D",
+  lightGold: "#E8D5A7",
+  cream: "#FFF9EF",
+};
+
+const ICON_BUTTON =
+  "relative flex h-10 w-10 shrink-0 items-center justify-center " +
+  "rounded-full border border-white/15 text-white/90 " +
+  "transition duration-300 hover:border-[#D9C28D]/70 " +
+  "hover:bg-white/10 hover:text-[#E8D5A7] " +
+  "focus-visible:outline-none focus-visible:ring-2 " +
+  "focus-visible:ring-[#D9C28D]";
+
+const COUNT_BADGE =
+  "absolute -right-1 -top-1 flex h-[17px] min-w-[17px] " +
+  "items-center justify-center rounded-full bg-[#D9C28D] " +
+  "px-1 text-[9px] font-bold text-[#10271E]";
 
 const Navbar = () => {
   const location = useLocation();
@@ -20,79 +52,48 @@ const Navbar = () => {
 
   const { cartCount } = useCart();
   const { wishlistCount } = useWishlist();
+  const { isAuthenticated, user } = useAuth();
 
+  const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [scrolled, setScrolled] = useState(false);
+  const [query, setQuery] = useState("");
+  const [listening, setListening] = useState(false);
+  const [voiceMessage, setVoiceMessage] = useState("");
 
-  const navLinks = [
-    { label: "Shop", href: "/shop" },
-    { label: "Collections", href: "/collections" },
-    { label: "About", href: "/about" },
-    { label: "Contact", href: "/contact" },
-  ];
+  const recognitionRef = useRef(null);
+  const inputRef = useRef(null);
 
-  /* =========================================
-     SCROLL EFFECT
-  ========================================= */
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 35);
-    };
-
-    handleScroll();
-
-    window.addEventListener("scroll", handleScroll, {
-      passive: true,
-    });
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
-
-  /* =========================================
-     ROUTE CHANGE
-  ========================================= */
-
-  useEffect(() => {
+  const closePanels = useCallback(() => {
     setMenuOpen(false);
     setSearchOpen(false);
-  }, [location.pathname]);
-
-  /* =========================================
-     ESCAPE KEY
-  ========================================= */
-
-  useEffect(() => {
-    const handleEscape = (event) => {
-      if (event.key === "Escape") {
-        setMenuOpen(false);
-        setSearchOpen(false);
-      }
-    };
-
-    window.addEventListener("keydown", handleEscape);
-
-    return () => {
-      window.removeEventListener("keydown", handleEscape);
-    };
   }, []);
 
-  /* =========================================
-     BODY SCROLL LOCK
-  ========================================= */
+  const isActive = (href) =>
+    href === "/"
+      ? location.pathname === "/"
+      : location.pathname === href ||
+        location.pathname.startsWith(`${href}/`);
 
   useEffect(() => {
-    if (!menuOpen) {
-      document.body.style.overflow = "";
-      return;
-    }
+    const handleScroll = () => setScrolled(window.scrollY > 35);
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    closePanels();
+    setQuery("");
+    setVoiceMessage("");
+  }, [location.pathname, closePanels]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
 
     const previousOverflow = document.body.style.overflow;
-
     document.body.style.overflow = "hidden";
 
     return () => {
@@ -100,875 +101,389 @@ const Navbar = () => {
     };
   }, [menuOpen]);
 
-  /* =========================================
-     SEARCH
-  ========================================= */
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        closePanels();
+        recognitionRef.current?.stop();
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [closePanels]);
+
+  useEffect(() => {
+    return () => recognitionRef.current?.abort();
+  }, []);
+
+  useEffect(() => {
+    if (searchOpen) inputRef.current?.focus();
+  }, [searchOpen]);
+
+  const goTo = (path) => {
+    closePanels();
+    navigate(path);
+  };
 
   const handleSearch = (event) => {
     event.preventDefault();
 
-    const query = searchQuery.trim();
+    const search = query.trim();
 
-    if (!query) return;
+    if (!search) {
+      inputRef.current?.focus();
+      return;
+    }
 
-    navigate(`/shop?search=${encodeURIComponent(query)}`);
-
-    setSearchQuery("");
-    setSearchOpen(false);
-    setMenuOpen(false);
+    recognitionRef.current?.stop();
+    navigate(`/shop?search=${encodeURIComponent(search)}`);
+    closePanels();
+    setQuery("");
+    setVoiceMessage("");
   };
 
-  /* =========================================
-     ACTIVE LINK
-  ========================================= */
+  const handleVoiceSearch = () => {
+    if (listening) {
+      recognitionRef.current?.stop();
+      return;
+    }
 
-  const isActive = (href) => {
-    if (href === "/") {
-      return location.pathname === "/";
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setVoiceMessage("Voice search is not supported in this browser.");
+      return;
+    }
+
+    try {
+      recognitionRef.current?.abort();
+
+      const recognition = new SpeechRecognition();
+
+      recognition.lang = "en-IN";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        setListening(true);
+        setVoiceMessage("Listening...");
+      };
+
+      recognition.onresult = (event) => {
+        const result = event.results?.[0]?.[0]?.transcript?.trim();
+
+        if (result) {
+          setQuery(result);
+          setVoiceMessage(`Recognized: ${result}`);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        setListening(false);
+        setVoiceMessage(
+          event.error === "not-allowed"
+            ? "Please allow microphone access."
+            : "Voice search failed. Please try again."
+        );
+      };
+
+      recognition.onend = () => setListening(false);
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch {
+      setListening(false);
+      setVoiceMessage("Unable to start voice search.");
+    }
+  };
+
+  const renderNavLink = ({ label, href }, mobile = false) => {
+    const active = isActive(href);
+
+    if (mobile) {
+      return (
+        <Link
+          key={href}
+          to={href}
+          onClick={closePanels}
+          className={`flex min-h-12 items-center justify-between rounded-xl px-4 py-3 transition ${
+            active
+              ? "bg-white/10 text-[#E8D5A7]"
+              : "text-white/85 hover:bg-white/[0.06] hover:text-[#E8D5A7]"
+          }`}
+        >
+          <span className="font-serif text-lg">{label}</span>
+          <ArrowRight size={16} className="text-[#D9C28D]" />
+        </Link>
+      );
     }
 
     return (
-      location.pathname === href ||
-      location.pathname.startsWith(`${href}/`)
+      <Link
+        key={href}
+        to={href}
+        className={`rounded-full px-3 py-2.5 text-[9px] font-semibold uppercase tracking-[0.12em] transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9C28D] ${
+          active
+            ? "bg-white/10 text-[#E8D5A7]"
+            : "text-white/80 hover:bg-white/[0.08] hover:text-[#E8D5A7]"
+        }`}
+      >
+        {label}
+      </Link>
     );
   };
 
-  /* =========================================
-     MOBILE NAVIGATION
-  ========================================= */
+  const renderCount = (count) =>
+    count > 0 ? <span className={COUNT_BADGE}>{count}</span> : null;
 
-  const closeMenu = () => {
-    setMenuOpen(false);
-    setSearchOpen(false);
-  };
+  const renderSearchForm = (mobile = false) => (
+    <form
+      onSubmit={handleSearch}
+      role="search"
+      className={
+        mobile
+          ? "flex items-center gap-2 rounded-2xl border border-white/15 bg-white/[0.06] px-3 py-2"
+          : "mx-auto flex max-w-2xl items-center gap-3 px-4 py-3"
+      }
+    >
+      <Search size={17} className="shrink-0 text-[#D9C28D]" />
 
-  const goTo = (path) => {
-    closeMenu();
-    navigate(path);
-  };
+      <input
+        ref={mobile ? undefined : inputRef}
+        type="search"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder="Search bangles, designs..."
+        aria-label="Search products"
+        className="min-w-0 flex-1 bg-transparent py-2 text-sm text-white outline-none placeholder:text-white/40"
+      />
+
+      <button
+        type="button"
+        onClick={handleVoiceSearch}
+        aria-label={listening ? "Stop voice search" : "Voice search"}
+        className={`${ICON_BUTTON} ${
+          mobile ? "h-9 w-9" : ""
+        } ${listening ? "bg-[#D9C28D]/20 text-[#E8D5A7]" : ""}`}
+      >
+        <Mic size={mobile ? 16 : 17} />
+      </button>
+
+      <button
+        type="submit"
+        aria-label={mobile ? "Submit search" : undefined}
+        className={
+          mobile
+            ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#D9C28D] text-[#10271E]"
+            : "rounded-full bg-[#D9C28D] px-5 py-2.5 text-[9px] font-bold uppercase tracking-wider text-[#10271E] transition hover:bg-[#E8D5A7]"
+        }
+      >
+        {mobile ? <ArrowRight size={16} /> : "Search"}
+      </button>
+    </form>
+  );
+
+
+const renderAccountActions = (mobile = false) => (
+  <>
+    <button
+      type="button"
+      onClick={() => goTo(isAuthenticated ? "/profile" : "/login")}
+      aria-label={isAuthenticated ? "Profile" : "Login"}
+      className={
+        mobile
+          ? "flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-xs text-white transition hover:bg-white/[0.06]"
+          : ICON_BUTTON
+      }
+    >
+      <UserRound size={mobile ? 16 : 18} />
+      {mobile && (isAuthenticated ? (user?.name || "Profile") : "Login")}
+    </button>
+
+    <button
+      type="button"
+      onClick={() => goTo("/wishlist")}
+      aria-label={`Wishlist, ${wishlistCount} items`}
+      className={
+        mobile
+          ? "flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-xs text-white transition hover:bg-white/[0.06]"
+          : ICON_BUTTON
+      }
+    >
+      <Heart size={mobile ? 16 : 18} />
+      {mobile && "Wishlist"}
+      {mobile
+        ? wishlistCount > 0 && ` (${wishlistCount})`
+        : renderCount(wishlistCount)}
+    </button>
+  </>
+);
 
   return (
-    <header
-      className={`
-        fixed
-        left-0
-        top-0
-        z-[100]
-        w-full
-        px-2
-        transition-all
-        duration-500
-        sm:px-4
-        lg:px-7
-        ${scrolled ? "pt-2" : "pt-2.5 sm:pt-3"}
-      `}
-    >
+    <header className="fixed inset-x-0 top-0 z-[100] px-3 pt-3 sm:px-5 sm:pt-4 lg:px-6">
       <div
-        className={`
-          mx-auto
-          w-full
-          max-w-[1440px]
-          overflow-hidden
-          border
-          border-[#eadbdd]
-          bg-[#fffaf8]/95
-          backdrop-blur-2xl
-          transition-all
-          duration-500
-          ${
-            scrolled
-              ? "rounded-[18px] shadow-[0_10px_35px_rgba(75,43,52,0.14)]"
-              : "rounded-[20px] shadow-[0_12px_45px_rgba(75,43,52,0.09)] sm:rounded-[26px]"
-          }
-        `}
+        className={`mx-auto w-full max-w-[1500px] overflow-visible rounded-[22px] border transition-all duration-500 ${
+          scrolled
+            ? "border-white/15 bg-[#10271E]/85 shadow-[0_12px_40px_rgba(0,0,0,0.22)] backdrop-blur-2xl"
+            : "border-white/20 bg-[#10271E]/25 shadow-[0_8px_35px_rgba(0,0,0,0.06)] backdrop-blur-md"
+        }`}
       >
-        {/* =========================================
-            ANNOUNCEMENT BAR
-        ========================================== */}
-
+        {/* Announcement */}
         <div
-          className="
-            flex
-            min-h-[29px]
-            items-center
-            justify-center
-            gap-1.5
-            bg-[#f5e1e5]
-            px-3
-            py-1.5
-            text-center
-            sm:gap-2
-            sm:px-4
-          "
+          className={`flex items-center justify-center gap-2 overflow-hidden rounded-t-[21px] border-b border-white/10 px-3 text-center transition-all duration-300 ${
+            scrolled
+              ? "h-0 border-transparent opacity-0"
+              : "h-8 opacity-100"
+          }`}
         >
-          <Sparkles
-            size={10}
-            strokeWidth={1.5}
-            className="shrink-0 text-[#a56b79]"
-          />
-
-          <p
-            className="
-              text-[7px]
-              font-medium
-              uppercase
-              tracking-[0.12em]
-              text-[#704953]
-              sm:text-[9px]
-              sm:tracking-[0.17em]
-            "
-          >
-            New arrivals are here
-          </p>
-
-          <span className="text-[9px] text-[#c28b99]">
-            ♡
+          <Sparkles size={11} className="shrink-0 text-[#D9C28D]" />
+          <span className="truncate text-[8px] font-medium uppercase tracking-[0.14em] text-white/80 sm:text-[9px] sm:tracking-[0.2em]">
+            A little sparkle, a lasting impression
           </span>
         </div>
 
-        {/* =========================================
-            MAIN NAV
-        ========================================== */}
-
-        <div
-          className="
-            relative
-            flex
-            min-h-[62px]
-            items-center
-            px-2
-            py-2
-            sm:min-h-[72px]
-            sm:px-5
-            lg:min-h-[76px]
-            lg:px-7
-          "
-        >
-          {/* =======================================
-              DESKTOP NAV
-          ======================================== */}
-
-          <nav className="hidden items-center gap-1 lg:flex">
-            <Link
-              to="/"
-              className={`
-                rounded-full
-                px-4
-                py-2.5
-                text-[10px]
-                font-medium
-                uppercase
-                tracking-[0.13em]
-                transition-all
-                duration-300
-                ${
-                  isActive("/")
-                    ? "bg-[#493238] text-white"
-                    : "text-[#493238] hover:bg-[#f7eceb]"
-                }
-              `}
-            >
-              Home
-            </Link>
-
-            {navLinks.map((item) => (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={`
-                  rounded-full
-                  px-4
-                  py-2.5
-                  text-[10px]
-                  font-medium
-                  uppercase
-                  tracking-[0.13em]
-                  transition-all
-                  duration-300
-                  ${
-                    isActive(item.href)
-                      ? "bg-[#493238] text-white"
-                      : "text-[#493238] hover:bg-[#f7eceb]"
-                  }
-                `}
-              >
-                {item.label}
-              </Link>
-            ))}
+        {/* Main navigation: three-column grid keeps logo centered */}
+        <div className="grid min-h-[66px] grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 sm:min-h-[72px] sm:px-5 lg:px-6">
+          {/* Desktop links */}
+          <nav
+            aria-label="Main navigation"
+            className="hidden min-w-0 items-center gap-0.5 xl:flex"
+          >
+            {NAV_LINKS.map((item) => renderNavLink(item))}
           </nav>
 
-          {/* =======================================
-              MOBILE LEFT - MENU
-          ======================================== */}
-
+          {/* Mobile menu */}
           <button
             type="button"
             onClick={() => {
-              setMenuOpen((value) => !value);
+              setMenuOpen((open) => !open);
               setSearchOpen(false);
             }}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
-            className="
-              flex
-              h-10
-              w-10
-              shrink-0
-              items-center
-              justify-center
-              rounded-full
-              bg-[#f7eceb]
-              text-[#493238]
-              transition-all
-              duration-300
-              hover:bg-[#f1dfe1]
-              lg:hidden
-            "
+            className={`${ICON_BUTTON} col-start-1 justify-self-start xl:hidden`}
           >
-            {menuOpen ? (
-              <X size={19} strokeWidth={1.7} />
-            ) : (
-              <Menu size={19} strokeWidth={1.7} />
-            )}
+            {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
 
-          {/* =======================================
-              LOGO
-          ======================================== */}
-
+          {/* Center logo */}
           <Link
             to="/"
-            className="
-              absolute
-              left-1/2
-              top-1/2
-              -translate-x-1/2
-              -translate-y-1/2
-              text-center
-            "
+            onClick={closePanels}
+            aria-label="YAMA FLYS home"
+            className="col-start-2 row-start-1 min-w-0 text-center"
           >
-            <div
-              className="
-                relative
-                whitespace-nowrap
-                font-serif
-                text-[18px]
-                font-semibold
-                tracking-[0.07em]
-                text-[#493238]
-                transition-transform
-                duration-300
-                hover:-rotate-1
-                sm:text-[24px]
-                sm:tracking-[0.11em]
-              "
-            >
-              YAMA FLYS
-
-              <span
-                className="
-                  absolute
-                  -right-3
-                  -top-2
-                  text-[9px]
-                  text-[#c59b54]
-                  sm:-right-4
-                  sm:-top-2
-                  sm:text-[11px]
-                "
-              >
-                ✦
-              </span>
-            </div>
-
-            <p
-              className="
-                mt-0.5
-                whitespace-nowrap
-                text-[4.5px]
-                font-medium
-                uppercase
-                tracking-[0.27em]
-                text-[#a56b79]
-                sm:text-[6.5px]
-                sm:tracking-[0.35em]
-              "
-            >
-              Pretty Things • Happy You
-            </p>
+            <span className="relative whitespace-nowrap font-serif text-[18px] font-semibold tracking-[0.06em] text-[#FFF9EF] sm:text-[25px] sm:tracking-[0.12em]">
+              YAMA FLAYS
+              <Sparkles
+                size={10}
+                className="absolute -right-4 -top-1 text-[#D9C28D] sm:-right-5"
+              />
+            </span>
+            <span className="mt-1 block whitespace-nowrap text-[5px] uppercase tracking-[0.2em] text-white/65 sm:text-[7px] sm:tracking-[0.3em]">
+              Pretty Things · Happy You
+            </span>
           </Link>
 
-          {/* =======================================
-              DESKTOP RIGHT ACTIONS
-          ======================================== */}
-
-          <div className="ml-auto hidden items-center gap-1 lg:flex">
-            {/* SEARCH */}
-
+          {/* Desktop actions */}
+          <div className="col-start-3 hidden min-w-0 items-center justify-self-end gap-1.5 xl:flex 2xl:gap-2">
             <button
               type="button"
               onClick={() => {
-                setSearchOpen((value) => !value);
+                setSearchOpen((open) => !open);
                 setMenuOpen(false);
               }}
-              aria-label="Search"
-              className="
-                flex
-                h-10
-                items-center
-                gap-2
-                rounded-full
-                px-3
-                text-[#493238]
-                transition-all
-                duration-300
-                hover:bg-[#f7eceb]
-                hover:text-[#a56b79]
-              "
+              aria-label={searchOpen ? "Close search" : "Open search"}
+              aria-expanded={searchOpen}
+              className={`${ICON_BUTTON} w-auto gap-2 px-3`}
             >
-              <Search size={16} strokeWidth={1.7} />
-
-              <span
-                className="
-                  text-[9px]
-                  font-medium
-                  uppercase
-                  tracking-[0.1em]
-                "
-              >
+              {searchOpen ? <X size={17} /> : <Search size={17} />}
+              <span className="text-[9px] font-semibold uppercase tracking-wider">
                 Search
               </span>
             </button>
 
-            {/* ACCOUNT */}
+            {renderAccountActions()}
 
             <button
               type="button"
-              onClick={() => navigate("/login")}
-              aria-label="Account"
-              className="
-                flex
-                h-10
-                w-10
-                items-center
-                justify-center
-                rounded-full
-                text-[#493238]
-                transition-all
-                duration-300
-                hover:bg-[#f7eceb]
-                hover:text-[#a56b79]
-              "
+              onClick={() => goTo("/cart")}
+              aria-label={`Shopping bag, ${cartCount} items`}
+              className="relative flex h-10 shrink-0 items-center gap-2 rounded-full bg-[#D9C28D] px-3 text-[#10271E] transition duration-300 hover:-translate-y-0.5 hover:bg-[#E8D5A7] sm:px-4"
             >
-              <UserRound size={17} strokeWidth={1.7} />
-            </button>
-
-            {/* WISHLIST */}
-
-            <button
-              type="button"
-              onClick={() => navigate("/wishlist")}
-              aria-label="Wishlist"
-              className="
-                relative
-                flex
-                h-10
-                w-10
-                items-center
-                justify-center
-                rounded-full
-                text-[#493238]
-                transition-all
-                duration-300
-                hover:bg-[#f7eceb]
-                hover:text-[#a56b79]
-              "
-            >
-              <Heart size={17} strokeWidth={1.7} />
-
-              {wishlistCount > 0 && (
-                <span
-                  className="
-                    absolute
-                    right-0
-                    top-0
-                    flex
-                    h-[16px]
-                    min-w-[16px]
-                    items-center
-                    justify-center
-                    rounded-full
-                    bg-[#b97888]
-                    px-1
-                    text-[8px]
-                    font-semibold
-                    text-white
-                  "
-                >
-                  {wishlistCount}
-                </span>
-              )}
-            </button>
-
-            {/* BAG */}
-
-            <button
-              type="button"
-              onClick={() => navigate("/cart")}
-              aria-label="Shopping bag"
-              className="
-                relative
-                flex
-                h-10
-                items-center
-                gap-2
-                rounded-full
-                bg-[#493238]
-                px-4
-                text-white
-                transition-all
-                duration-300
-                hover:-translate-y-0.5
-                hover:bg-[#5b3e45]
-              "
-            >
-              <ShoppingBag size={16} strokeWidth={1.7} />
-
-              <span
-                className="
-                  text-[9px]
-                  font-medium
-                  uppercase
-                  tracking-[0.12em]
-                "
-              >
+              <ShoppingBag size={16} />
+              <span className="text-[9px] font-bold uppercase tracking-wider">
                 Bag
               </span>
-
               {cartCount > 0 && (
-                <span
-                  className="
-                    flex
-                    h-[16px]
-                    min-w-[16px]
-                    items-center
-                    justify-center
-                    rounded-full
-                    bg-[#e9c3ca]
-                    px-1
-                    text-[8px]
-                    font-semibold
-                    text-[#493238]
-                  "
-                >
+                <span className="flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#10271E] px-1 text-[9px] font-bold text-white">
                   {cartCount}
                 </span>
               )}
             </button>
           </div>
 
-          {/* =======================================
-              MOBILE BAG
-          ======================================== */}
-
+          {/* Mobile cart */}
           <button
             type="button"
-            onClick={() => navigate("/cart")}
-            aria-label="Shopping bag"
-            className="
-              relative
-              ml-auto
-              flex
-              h-10
-              w-10
-              shrink-0
-              items-center
-              justify-center
-              rounded-full
-              bg-[#493238]
-              text-white
-              transition-all
-              duration-300
-              hover:bg-[#5b3e45]
-              lg:hidden
-            "
+            onClick={() => goTo("/cart")}
+            aria-label={`Shopping bag, ${cartCount} items`}
+            className={`${ICON_BUTTON} col-start-3 row-start-1 justify-self-end xl:hidden`}
           >
-            <ShoppingBag size={17} strokeWidth={1.7} />
-
-            {cartCount > 0 && (
-              <span
-                className="
-                  absolute
-                  -right-0.5
-                  -top-0.5
-                  flex
-                  h-[16px]
-                  min-w-[16px]
-                  items-center
-                  justify-center
-                  rounded-full
-                  bg-[#e9c3ca]
-                  px-1
-                  text-[8px]
-                  font-semibold
-                  text-[#493238]
-                "
-              >
-                {cartCount}
-              </span>
-            )}
+            <ShoppingBag size={18} />
+            {renderCount(cartCount)}
           </button>
         </div>
 
-        {/* =========================================
-            SEARCH PANEL
-        ========================================== */}
-
+        {/* Desktop search */}
         <div
-          className={`
-            overflow-hidden
-            transition-all
-            duration-500
-            ${
-              searchOpen
-                ? "max-h-[120px] border-t border-[#eadbdd]"
-                : "max-h-0"
-            }
-          `}
+          className={`hidden overflow-hidden transition-all duration-300 xl:block ${
+            searchOpen
+              ? "max-h-28 border-t border-white/10"
+              : "max-h-0 border-t border-transparent"
+          }`}
         >
-          <form
-            onSubmit={handleSearch}
-            className="px-3 py-3 sm:px-7 sm:py-4"
-          >
-            <div
-              className="
-                mx-auto
-                flex
-                max-w-2xl
-                items-center
-                gap-2
-                rounded-full
-                border
-                border-[#e3d2d5]
-                bg-white
-                px-3
-                py-1.5
-                shadow-sm
-                sm:px-4
-                sm:py-2
-              "
-            >
-              <Search
-                size={15}
-                strokeWidth={1.5}
-                className="shrink-0 text-[#aa7b85]"
-              />
-
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(event) =>
-                  setSearchQuery(event.target.value)
-                }
-                placeholder="Search bangles, collections..."
-                aria-label="Search products"
-                autoFocus={searchOpen}
-                className="
-                  min-w-0
-                  flex-1
-                  bg-transparent
-                  px-1
-                  py-2
-                  text-[13px]
-                  text-[#493238]
-                  outline-none
-                  placeholder:text-[#b9a8ad]
-                  sm:text-sm
-                "
-              />
-
-              <button
-                type="submit"
-                className="
-                  shrink-0
-                  rounded-full
-                  bg-[#493238]
-                  px-3.5
-                  py-2
-                  text-[7px]
-                  font-medium
-                  uppercase
-                  tracking-[0.14em]
-                  text-white
-                  transition-all
-                  duration-300
-                  hover:bg-[#5b3e45]
-                  sm:px-4
-                  sm:text-[8px]
-                "
-              >
-                Search
-              </button>
-            </div>
-          </form>
+          {renderSearchForm()}
+          {voiceMessage && (
+            <p role="status" className="pb-2 text-center text-xs text-[#E8D5A7]">
+              {voiceMessage}
+            </p>
+          )}
         </div>
 
-        {/* =========================================
-            MOBILE MENU
-        ========================================== */}
-
+        {/* Mobile menu */}
         <div
-          className={`
-            overflow-hidden
-            transition-all
-            duration-500
-            lg:hidden
-            ${
-              menuOpen
-                ? "max-h-[calc(100vh-95px)] border-t border-[#eadbdd]"
-                : "max-h-0"
-            }
-          `}
+          className={`overflow-hidden transition-all duration-300 ease-in-out xl:hidden ${
+            menuOpen
+              ? "max-h-[calc(100dvh-100px)] border-t border-white/15"
+              : "max-h-0 border-t border-transparent"
+          }`}
         >
-          <div
-            className="
-              max-h-[calc(100vh-95px)]
-              overflow-y-auto
-              bg-[#fffaf8]
-              px-3
-              pb-5
-              pt-3
-              sm:px-6
-              sm:pb-6
-              sm:pt-4
-            "
-          >
-            {/* SEARCH */}
+          <div className="max-h-[calc(100dvh-100px)] overflow-y-auto bg-[#10271E]/95 px-4 pb-5 pt-4 backdrop-blur-2xl sm:px-6">
+            {renderSearchForm(true)}
 
-            <form onSubmit={handleSearch} className="mb-3">
-              <div
-                className="
-                  flex
-                  items-center
-                  gap-2
-                  rounded-2xl
-                  border
-                  border-[#eadbdd]
-                  bg-white
-                  px-3
-                  py-2
-                "
-              >
-                <Search
-                  size={16}
-                  className="shrink-0 text-[#a56b79]"
-                />
-
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(event) =>
-                    setSearchQuery(event.target.value)
-                  }
-                  placeholder="Search bangles..."
-                  aria-label="Search products"
-                  className="
-                    min-w-0
-                    flex-1
-                    bg-transparent
-                    py-2
-                    text-sm
-                    text-[#493238]
-                    outline-none
-                    placeholder:text-[#b9a8ad]
-                  "
-                />
-
-                <button
-                  type="submit"
-                  className="
-                    rounded-xl
-                    bg-[#493238]
-                    px-3
-                    py-2
-                    text-[8px]
-                    font-medium
-                    uppercase
-                    tracking-[0.1em]
-                    text-white
-                  "
-                >
-                  Search
-                </button>
-              </div>
-            </form>
-
-            {/* NAV LINKS */}
-
-            <div className="space-y-1.5">
-              <Link
-                to="/"
-                onClick={closeMenu}
-                className={`
-                  flex
-                  min-h-[52px]
-                  items-center
-                  justify-between
-                  rounded-2xl
-                  px-4
-                  py-3
-                  transition-all
-                  duration-300
-                  ${
-                    isActive("/")
-                      ? "bg-[#f5e1e5]"
-                      : "hover:bg-[#faf0ef]"
-                  }
-                `}
-              >
-                <span className="font-serif text-lg text-[#493238]">
-                  Home
-                </span>
-
-                <ArrowRight
-                  size={16}
-                  className="text-[#b37b88]"
-                />
-              </Link>
-
-              {navLinks.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  onClick={closeMenu}
-                  className={`
-                    flex
-                    min-h-[52px]
-                    items-center
-                    justify-between
-                    rounded-2xl
-                    px-4
-                    py-3
-                    transition-all
-                    duration-300
-                    ${
-                      isActive(item.href)
-                        ? "bg-[#f5e1e5]"
-                        : "hover:bg-[#faf0ef]"
-                    }
-                  `}
-                >
-                  <span className="font-serif text-lg text-[#493238]">
-                    {item.label}
-                  </span>
-
-                  <ArrowRight
-                    size={16}
-                    className="text-[#b37b88]"
-                  />
-                </Link>
-              ))}
-            </div>
-
-            {/* ACCOUNT / WISHLIST */}
-
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => goTo("/login")}
-                className="
-                  flex
-                  min-h-[50px]
-                  items-center
-                  justify-center
-                  gap-2
-                  rounded-2xl
-                  border
-                  border-[#eadbdd]
-                  bg-white
-                  px-3
-                  py-3
-                  text-[8px]
-                  font-medium
-                  uppercase
-                  tracking-[0.1em]
-                  text-[#493238]
-                  transition-all
-                  hover:bg-[#faf0ef]
-                "
-              >
-                <UserRound size={15} />
-                Account
-              </button>
-
-              <button
-                type="button"
-                onClick={() => goTo("/wishlist")}
-                className="
-                  flex
-                  min-h-[50px]
-                  items-center
-                  justify-center
-                  gap-2
-                  rounded-2xl
-                  border
-                  border-[#eadbdd]
-                  bg-white
-                  px-3
-                  py-3
-                  text-[8px]
-                  font-medium
-                  uppercase
-                  tracking-[0.1em]
-                  text-[#493238]
-                  transition-all
-                  hover:bg-[#faf0ef]
-                "
-              >
-                <Heart size={15} />
-
-                Wishlist
-
-                {wishlistCount > 0 && (
-                  <span className="text-[#b97888]">
-                    ({wishlistCount})
-                  </span>
-                )}
-              </button>
-            </div>
-
-            {/* BRAND MESSAGE */}
-
-            <div
-              className="
-                mt-3
-                rounded-[18px]
-                bg-[#f5e1e5]
-                px-4
-                py-4
-                text-center
-              "
-            >
-              <Sparkles
-                size={15}
-                className="mx-auto text-[#b47784]"
-              />
-
-              <p className="mt-2 font-serif text-lg text-[#704953]">
-                A little sparkle,
-                <br />
-                just for you.
+            {voiceMessage && (
+              <p role="status" className="mt-2 px-1 text-xs text-[#E8D5A7]">
+                {voiceMessage}
               </p>
+            )}
 
-              <p
-                className="
-                  mt-2
-                  text-[7px]
-                  uppercase
-                  tracking-[0.18em]
-                  text-[#a56b79]
-                "
-              >
+            <nav aria-label="Mobile navigation" className="mt-4 space-y-1">
+              {NAV_LINKS.map((item) => renderNavLink(item, true))}
+            </nav>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              {renderAccountActions(true)}
+            </div>
+
+            <div className="mt-4 rounded-xl border border-[#D9C28D]/20 bg-[#D9C28D]/[0.06] px-4 py-4 text-center">
+              <Sparkles size={18} className="mx-auto text-[#D9C28D]" />
+              <p className="mt-2 font-serif text-lg text-[#FFF9EF]">
+                A little sparkle, just for you.
+              </p>
+              <p className="mt-1 text-[8px] uppercase tracking-[0.25em] text-white/55">
                 YAMA FLYS
               </p>
             </div>

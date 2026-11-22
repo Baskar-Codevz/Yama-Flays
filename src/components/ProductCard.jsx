@@ -1,478 +1,200 @@
-import React, { useMemo } from "react";
+
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Heart, ArrowUpRight, Star, Sparkles } from "lucide-react";
-
 import { useWishlist } from "../Context/WishlistContext";
 
 const BACKEND_URL = "https://yama-flays-backend.onrender.com";
+const FALLBACK_IMAGE = "/assets/img-1.webp";
 
-/* =========================================================
-   PRODUCT IMAGE URL
-========================================================= */
+const getImageUrl = (image) => {
+  if (!image) return FALLBACK_IMAGE;
+  if (/^https?:\/\//i.test(image)) return image;
+  if (image.startsWith("/uploads/")) return `${BACKEND_URL}${image}`;
+  if (image.startsWith("/assets/")) return image;
 
-    const getImageUrl = (image) => {
-  if (!image) {
-    return "/assets/img-1.webp";
-  }
-
-  // Already a complete URL
-  if (image.startsWith("http://") || image.startsWith("https://")) {
-    return image;
-  }
-
-  // Images uploaded by backend
-  if (image.startsWith("/uploads/")) {
-    return `${BACKEND_URL}${image}`;
-  }
-
-  // Frontend public assets
-  if (image.startsWith("/assets/")) {
-    return image;
-  }
-
-  // Any other relative path
   return image.startsWith("/") ? image : `/${image}`;
 };
-
-/* =========================================================
-   PRODUCT CARD
-========================================================= */
 
 const ProductCard = ({ product }) => {
   const { wishlistItems = [], toggleWishlist } = useWishlist();
 
-  /* =========================================================
-     SAFETY
-  ========================================================= */
-
   if (!product) return null;
 
-  /* =========================================================
-     PRODUCT ID
-  ========================================================= */
-
-  // MongoDB uses _id
-  // Old frontend products may use id
   const productId = String(product._id ?? product.id ?? "");
-
-  /* =========================================================
-     PRODUCT DATA
-  ========================================================= */
-
-      const productImage = getImageUrl(product.images?.[0] || product.image);
-        
   const productName = product.name || "Beautiful Jewellery";
 
-  const category = product.category || "Jewellery";
+  const category =
+    typeof product.category === "object"
+      ? product.category?.name || "Jewellery"
+      : product.category || "Jewellery";
 
-  const collection = product.collectionName || "New Collection";
+  const collection =
+    product.collectionName ||
+    (typeof product.collection === "string" ? product.collection : "") ||
+    "New Collection";
 
   const price = Number(product.price || 0);
-
   const originalPrice = Number(product.originalPrice || 0);
+  const image = getImageUrl(product.images?.[0] || product.image);
 
-  /* =========================================================
-     REVIEWS
-     
-     IMPORTANT:
-     Reviews now come directly from MongoDB through:
-     
-     product.reviews
-     
-     We DO NOT use localStorage here.
-  ========================================================= */
+  const reviews = Array.isArray(product.reviews)
+    ? product.reviews.filter((review) => {
+        const rating = Number(review?.rating);
+        return Number.isFinite(rating) && rating >= 1 && rating <= 5;
+      })
+    : [];
 
-  const reviews = Array.isArray(product.reviews) ? product.reviews : [];
-
-  const validReviews = reviews.filter((review) => {
-    const rating = Number(review?.rating);
-
-    return Number.isFinite(rating) && rating >= 1 && rating <= 5;
-  });
-
-  const reviewCount = validReviews.length;
-
-  const reviewRating = useMemo(() => {
-    if (validReviews.length === 0) {
-      return 0;
-    }
-
-    const totalRating = validReviews.reduce(
-      (total, review) => total + Number(review.rating),
-      0,
-    );
-
-    return totalRating / validReviews.length;
-  }, [product.reviews]);
-
-  /* =========================================================
-     STOCK
-  ========================================================= */
+  const rating = useMemo(
+    () =>
+      reviews.length
+        ? reviews.reduce(
+            (total, review) => total + Number(review.rating),
+            0
+          ) / reviews.length
+        : 0,
+    [reviews]
+  );
 
   const totalStock = Array.isArray(product.sizes)
-    ? product.sizes.reduce((total, size) => total + Number(size.stock || 0), 0)
+    ? product.sizes.reduce(
+        (total, size) => total + Number(size?.stock || 0),
+        0
+      )
     : Number(product.stock || 0);
 
   const isOutOfStock = totalStock <= 0;
 
-  /* =========================================================
-     WISHLIST
-  ========================================================= */
-
   const isWishlisted = wishlistItems.some(
-    (item) => String(item?._id ?? item?.id ?? "") === productId,
+    (item) => String(item?._id ?? item?.id ?? "") === productId
   );
-
-  /* =========================================================
-     DISCOUNT
-  ========================================================= */
 
   const discount =
     originalPrice > price && price > 0
       ? Math.round(((originalPrice - price) / originalPrice) * 100)
       : 0;
 
-  /* =========================================================
-     WISHLIST HANDLER
-  ========================================================= */
-
   const handleWishlist = (event) => {
     event.preventDefault();
     event.stopPropagation();
-
     toggleWishlist(product);
   };
 
-  /* =========================================================
-     INVALID PRODUCT ID
-  ========================================================= */
-
-  if (!productId) {
-    console.warn("ProductCard: Product ID is missing", product);
-  }
-
-  /* =========================================================
-     RENDER
-  ========================================================= */
-
   return (
-    <article
-      className="
-        group relative flex h-full flex-col overflow-hidden
-        rounded-[1.7rem]
-        border border-[#E9DEE2]
-        bg-white
-        shadow-[0_12px_45px_rgba(74,48,56,0.06)]
-        transition-all duration-500
-        hover:-translate-y-1
-        hover:border-[#DEC6CD]
-        hover:shadow-[0_22px_60px_rgba(74,48,56,0.12)]
-      "
-    >
-      {/* =====================================================
-          IMAGE
-      ===================================================== */}
-
-      <div className="relative aspect-[0.92] w-full overflow-hidden bg-[#F7F1F3]">
-        <Link to={`/product/${productId}`} className="block h-full w-full">
+    <article className="group flex h-full flex-col overflow-hidden rounded-3xl border border-[#DCE4D7] bg-[#FBFBF6] transition duration-300 hover:-translate-y-1 hover:border-[#A9BDA5] hover:shadow-[0_18px_45px_rgba(36,76,54,0.12)]">
+      <div className="relative aspect-[4/5] overflow-hidden bg-[#EEF0E7]">
+        <Link
+          to={`/product/${productId}`}
+          aria-label={`View ${productName}`}
+          className="block h-full"
+        >
           <img
-            src={productImage}
+            src={image}
             alt={productName}
             loading="lazy"
-            className="
-              h-full w-full object-cover
-              transition-transform duration-700
-              group-hover:scale-[1.06]
-            "
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             onError={(event) => {
-              console.error("Product image failed:", productImage);
-
               event.currentTarget.onerror = null;
-              event.currentTarget.src = "/assets/img-1.webp";
+              event.currentTarget.src = FALLBACK_IMAGE;
             }}
           />
         </Link>
 
-        {/* ===================================================
-            COLLECTION
-        =================================================== */}
-
-        <div
-          className="
-            absolute left-4 top-4
-            rounded-full
-            border border-white/70
-            bg-white/90
-            px-3 py-1.5
-            shadow-[0_5px_20px_rgba(50,30,35,0.08)]
-            backdrop-blur-md
-          "
-        >
-          <div className="flex items-center gap-1.5">
-            <Sparkles size={10} strokeWidth={1.4} className="text-[#B18A28]" />
-
-            <span
-              className="
-                text-[8px]
-                font-semibold
-                uppercase
-                tracking-[0.18em]
-                text-[#684952]
-              "
-            >
-              {collection}
-            </span>
-          </div>
-        </div>
-
-        {/* ===================================================
-            DISCOUNT
-        =================================================== */}
+        <span className="absolute left-3 top-3 inline-flex max-w-[75%] items-center gap-1.5 truncate rounded-full border border-white/70 bg-[#FBFBF6]/95 px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-[#244C36] backdrop-blur-sm">
+          <Sparkles size={11} className="shrink-0 text-[#244C36]" />
+          <span className="truncate">{collection}</span>
+        </span>
 
         {discount > 0 && (
-          <div
-            className="
-              absolute bottom-4 left-4
-              rounded-full
-              bg-[#39272A]
-              px-3 py-1.5
-              text-[8px]
-              font-semibold
-              uppercase
-              tracking-[0.15em]
-              text-white
-            "
-          >
+          <span className="absolute bottom-3 left-3 rounded-full bg-[#244C36] px-3 py-1.5 text-[10px] font-semibold text-white">
             {discount}% OFF
-          </div>
+          </span>
         )}
-
-        {/* ===================================================
-            WISHLIST
-        =================================================== */}
 
         <button
           type="button"
           onClick={handleWishlist}
           aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-          className="
-            absolute right-4 top-4
-            flex h-10 w-10
-            items-center justify-center
-            rounded-full
-            border border-white/70
-            bg-white/90
-            text-[#39272A]
-            shadow-[0_6px_20px_rgba(50,30,35,0.10)]
-            backdrop-blur-md
-            transition-all duration-300
-            hover:scale-110
-          "
+          className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-[#FBFBF6]/95 text-[#244C36] shadow-sm transition hover:scale-105 hover:bg-white"
         >
           <Heart
-            size={17}
-            strokeWidth={1.5}
-            className={
-              isWishlisted ? "fill-[#D77F96] text-[#D77F96]" : "text-[#513B40]"
-            }
+            size={18}
+            strokeWidth={1.6}
+            className={isWishlisted ? "fill-[#244C36] text-[#244C36]" : ""}
           />
         </button>
-      </div>
 
-      {/* =====================================================
-          CONTENT
-      ===================================================== */}
-
-      <div
-        className="
-          flex flex-1 flex-col
-          px-5 pb-5 pt-5
-          sm:px-6 sm:pb-6 sm:pt-6
-        "
-      >
-        {/* CATEGORY */}
-
-        <div className="flex items-center justify-between gap-3">
-          <p
-            className="
-              text-[8px]
-              font-semibold
-              uppercase
-              tracking-[0.24em]
-              text-[#A06D79]
-            "
-          >
-            {category}
-          </p>
-
-          {isOutOfStock && (
-            <span
-              className="
-                rounded-full
-                bg-[#F3E8EA]
-                px-2.5 py-1
-                text-[7px]
-                font-semibold
-                uppercase
-                tracking-[0.12em]
-                text-[#8A5D67]
-              "
-            >
+        {isOutOfStock && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[#F5F4EC]/65">
+            <span className="rounded-full border border-[#244C36]/20 bg-[#FBFBF6] px-4 py-2 text-xs font-semibold text-[#244C36]">
               Sold Out
             </span>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
 
-        {/* NAME */}
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#244C36]">
+          {category}
+        </p>
 
         <Link to={`/product/${productId}`} className="mt-2">
-          <h3
-            className="
-              min-h-[3.5rem]
-              font-serif
-              text-[20px]
-              leading-[1.35]
-              text-[#2F2225]
-              transition-colors
-              duration-300
-              group-hover:text-[#8D5967]
-            "
-          >
+          <h3 className="line-clamp-2 min-h-[3.25rem] font-serif text-lg leading-6 text-[#244C36] transition-colors group-hover:text-[#52785A] sm:text-xl">
             {productName}
           </h3>
         </Link>
 
-        {/* ===================================================
-            RATING
-        =================================================== */}
-
-        <div className="mt-4 flex items-center justify-center gap-2">
-          <div className="flex gap-0.5">
+        <div className="mt-3 flex items-center gap-2">
+          <div className="flex items-center gap-0.5">
             {[1, 2, 3, 4, 5].map((star) => (
               <Star
                 key={star}
-                size={14}
-                strokeWidth={1.4}
+                size={13}
+                strokeWidth={1.5}
                 className={
-                  star <= Math.round(reviewRating)
-                    ? "fill-[#C9A227] text-[#C9A227]"
-                    : "text-[#D8C7A7]"
+                  star <= Math.round(rating)
+                    ? "fill-[#244C36] text-[#244C36]"
+                    : "text-[#C9D2C2]"
                 }
               />
             ))}
           </div>
 
-          {reviewCount > 0 ? (
-            <>
-              <span className="text-[10px] text-[#786B70]">
-                {reviewRating.toFixed(1)}
-              </span>
-
-              <span className="text-[10px] text-[#A69A9F]">
-                ({reviewCount})
-              </span>
-            </>
+          {reviews.length > 0 ? (
+            <span className="text-xs text-[#244C36]">
+              {rating.toFixed(1)} ({reviews.length})
+            </span>
           ) : (
-            <span className="text-[10px] text-[#A69A9F]">No reviews</span>
+            <span className="text-xs text-[#244C36]">No reviews</span>
           )}
         </div>
 
-        {/* ===================================================
-            PRICE
-        =================================================== */}
-
-        <div className="mt-4 flex items-end justify-center gap-2">
-          <span
-            className="
-              font-serif
-              text-[22px]
-              font-medium
-              text-[#2C2023]
-            "
-          >
+        <div className="mt-4 flex flex-wrap items-baseline gap-2">
+          <span className="font-serif text-xl font-semibold text-[#244C36]">
             ₹{price.toLocaleString("en-IN")}
           </span>
 
           {originalPrice > price && (
-            <span
-              className="
-                pb-0.5
-                text-[12px]
-                text-[#A69A9F]
-                line-through
-              "
-            >
+            <span className="text-sm text-[#52785A] line-through">
               ₹{originalPrice.toLocaleString("en-IN")}
             </span>
           )}
         </div>
 
-        {/* ===================================================
-            STOCK
-        =================================================== */}
-
-        <div className="mt-3 text-center">
-          {isOutOfStock ? (
-            <span
-              className="
-                text-[8px]
-                font-semibold
-                uppercase
-                tracking-[0.18em]
-                text-[#9A777E]
-              "
-            >
-              Currently unavailable
-            </span>
-          ) : (
-            <span
-              className="
-                text-[8px]
-                font-semibold
-                uppercase
-                tracking-[0.18em]
-                text-[#4E9868]
-              "
-            >
-              Available
-            </span>
-          )}
-        </div>
-
-        {/* ===================================================
-            BUTTON
-        =================================================== */}
+        <p
+          className={`mt-2 text-xs ${
+            isOutOfStock ? "text-[#244C36]" : "text-[#244C36]"
+          }`}
+        >
+          {isOutOfStock ? "Currently unavailable" : "In stock"}
+        </p>
 
         <Link
           to={`/product/${productId}`}
-          className="
-            mt-5
-            flex min-h-[52px] w-full
-            items-center justify-center gap-3
-            rounded-full
-            bg-[#2F2225]
-            px-5
-            text-[9px]
-            font-semibold
-            uppercase
-            tracking-[0.2em]
-            text-white
-            transition-all duration-300
-            hover:-translate-y-0.5
-            hover:bg-[#493136]
-          "
+          className="mt-4 flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#244C36] px-4 py-3 text-xs font-semibold text-white transition hover:bg-[#183B29]"
         >
-          <span>{isOutOfStock ? "View Details" : "View Product"}</span>
-
-          <ArrowUpRight
-            size={15}
-            strokeWidth={1.5}
-            className="
-              transition-transform
-              duration-300
-              group-hover:translate-x-0.5
-            "
-          />
+          View product
+          <ArrowUpRight size={15} />
         </Link>
       </div>
     </article>

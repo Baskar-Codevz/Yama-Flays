@@ -1,429 +1,181 @@
-import React from "react";
+
+import { Link } from "react-router-dom";
 import {
-  ArrowUpRight,
   Gem,
   ShoppingBag,
   Sparkles,
   MessageCircle,
+  ArrowRight,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 
 const features = [
   {
-    number: "01",
+    id: "01",
     icon: Gem,
-    eyebrow: "Curated Style",
+    eyebrow: "CURATED STYLE",
     title: "Elegant Designs",
     description:
       "Discover thoughtfully selected bangle designs created to complement your personal style.",
     linkText: "Explore Collection",
     link: "/collections",
+    image: "/assets/img1.jpg",
+    imageAlt: "Elegant bangle designs",
   },
   {
-    number: "02",
+    id: "02",
     icon: ShoppingBag,
-    eyebrow: "Simple Experience",
+    eyebrow: "SIMPLE EXPERIENCE",
     title: "Easy Shopping",
     description:
       "Browse our collection, explore your favourites, and enjoy a simple shopping experience.",
     linkText: "Shop Bangles",
     link: "/shop",
+    image: "/assets/img2.jpg",
+    imageAlt: "YAMA FLYS shopping collection",
   },
   {
-    number: "03",
+    id: "03",
     icon: Sparkles,
-    eyebrow: "For Every Moment",
+    eyebrow: "FOR EVERY MOMENT",
     title: "Made for Every Occasion",
     description:
       "Find styles that beautifully complement everyday looks, celebrations, and special moments.",
     linkText: "View Collections",
     link: "/collections",
+    image: "/assets/img3.jpg",
+    imageAlt: "Bangles for special occasions",
   },
   {
-    number: "04",
+    id: "04",
     icon: MessageCircle,
-    eyebrow: "Personal Assistance",
+    eyebrow: "PERSONAL ASSISTANCE",
     title: "We're Here to Help",
     description:
       "Have a question about a product or order? Reach out to us and our team will be happy to assist.",
     linkText: "Contact Us",
     link: "/contact",
+    image: "/assets/img4.jpg",
+    imageAlt: "Personal customer assistance",
   },
 ];
 
 const Features = () => {
   return (
-    <section
-      className="
-        relative
-        overflow-hidden
-        bg-[#F3EDE5]
-        px-6
-        py-20
-        sm:px-8
-        md:py-24
-        lg:px-12
-        xl:px-16
-      "
-    >
-      {/* ================= BACKGROUND DETAILS ================= */}
-
+    <section className="relative overflow-hidden bg-[#F5F5F0] px-5 py-16 text-[#234633] sm:px-8 sm:py-20 lg:px-12 lg:py-24">
+      {/* Subtle background decoration */}
       <div
-        className="
-          pointer-events-none
-          absolute
-          left-[-120px]
-          top-[-100px]
-          h-80
-          w-80
-          rounded-full
-          bg-[#B28B52]/[0.07]
-          blur-3xl
-        "
-      />
-
-      <div
-        className="
-          pointer-events-none
-          absolute
-          bottom-[-120px]
-          right-[-100px]
-          h-96
-          w-96
-          rounded-full
-          bg-[#8F7561]/[0.08]
-          blur-3xl
-        "
-      />
-
-      <div
-        className="
-          pointer-events-none
-          absolute
-          left-1/2
-          top-1/2
-          hidden
-          h-px
-          w-[70%]
-          -translate-x-1/2
-          bg-[#B28B52]/10
-          lg:block
-        "
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-[#DDE6D8]/40 blur-3xl"
       />
 
       <div className="relative mx-auto max-w-7xl">
-        {/* ================= SECTION HEADING ================= */}
-
-        <div className="mx-auto max-w-3xl text-center">
+        {/* Heading */}
+        <header className="mb-10 text-center sm:mb-12">
           <div className="mb-5 flex items-center justify-center gap-4">
-            <span className="h-px w-10 bg-[#B28B52]" />
+            <span className="h-px w-8 bg-[#78917A] sm:w-12" />
 
-            <span
-              className="
-                text-[10px]
-                font-medium
-                uppercase
-                tracking-[0.4em]
-                text-[#8B693F]
-              "
-            >
-              The YAMA FLYS Experience
-            </span>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#607D65] sm:text-xs">
+              YAMA FLAYS
+            </p>
 
-            <span className="h-px w-10 bg-[#B28B52]" />
+            <span className="h-px w-8 bg-[#78917A] sm:w-12" />
           </div>
 
-          <h2
-            className="
-              font-serif
-              text-4xl
-              leading-[1.08]
-              text-[#211A17]
-              sm:text-5xl
-              md:text-6xl
-            "
-          >
-            Elegance in
-            <span className="block italic text-[#9A7656]">every detail.</span>
+          <h2 className="mx-auto max-w-3xl font-serif text-3xl font-medium leading-tight tracking-tight sm:text-4xl md:text-5xl">
+            More than just bangles.
+            <br />
+            <span className="italic text-[#607D65]">
+              It's an experience.
+            </span>
           </h2>
 
-          <p
-            className="
-              mx-auto
-              mt-6
-              max-w-2xl
-              text-sm
-              leading-7
-              text-[#625A55]
-              sm:text-base
-            "
-          >
-            Discover a refined shopping experience where beautiful designs,
-            effortless browsing, and personal assistance come together.
-          </p>
-        </div>
+          <div className="mt-5 flex items-center justify-center gap-3">
+            <span className="h-px w-10 bg-[#78917A]" />
+            <Sparkles
+              size={17}
+              strokeWidth={1.5}
+              className="text-[#31563A]"
+            />
+            <span className="h-px w-10 bg-[#78917A]" />
+          </div>
+        </header>
 
-        {/* ================= FEATURE GRID ================= */}
-
-        <div
-          className="
-            mt-14
-            grid
-            gap-5
-            sm:grid-cols-2
-            lg:mt-16
-            lg:grid-cols-4
-          "
-        >
+        {/* Four compact feature cards */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
           {features.map((feature) => {
             const Icon = feature.icon;
 
             return (
-              <Link
-                key={feature.number}
-                to={feature.link}
-                aria-label={`${feature.linkText} - ${feature.title}`}
-                className="
-                  group
-                  relative
-                  flex
-                  min-h-[390px]
-                  flex-col
-                  overflow-hidden
-                  border
-                  border-[#D8CEC4]
-                  bg-[#FAF7F2]
-                  px-7
-                  pb-7
-                  pt-6
-                  transition-all
-                  duration-500
-                  ease-out
-                  hover:-translate-y-2
-                  hover:border-[#B28B52]
-                  hover:shadow-[0_24px_60px_rgba(52,32,22,0.12)]
-                  focus:outline-none
-                  focus-visible:ring-2
-                  focus-visible:ring-[#B28B52]
-                  focus-visible:ring-offset-4
-                "
+              <article
+                key={feature.id}
+                className="group relative flex min-w-0 flex-col overflow-hidden rounded-[1.25rem] border border-[#31563A]/15 bg-white/40 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-[#31563A]/30 hover:bg-white/70 hover:shadow-[0_12px_30px_rgba(35,70,51,0.08)] sm:p-6"
               >
-                {/* ================= CARD TOP ================= */}
-
-                <div className="flex items-center justify-between">
-                  <span
-                    className="
-                      text-[10px]
-                      font-medium
-                      tracking-[0.3em]
-                      text-[#9A8C82]
-                      transition-colors
-                      duration-500
-                      group-hover:text-[#A58218]
-                    "
-                  >
-                    {feature.number}
+                {/* Number and circular image */}
+                <div className="relative mb-4 flex min-h-[105px] items-start justify-between">
+                  <span className="pt-1 text-sm font-medium tracking-wide text-[#64816A]">
+                    {feature.id}
                   </span>
 
-                  <div
-                    className="
-                      flex
-                      items-center
-                      gap-2
-                      text-[9px]
-                      uppercase
-                      tracking-[0.22em]
-                      text-[#9A8C82]
-                      transition-colors
-                      duration-500
-                      group-hover:text-[#A58218]
-                    "
-                  >
-                    <span>{feature.eyebrow}</span>
-                  </div>
-                </div>
-
-                {/* ================= ICON ================= */}
-
-                <div className="mt-8">
-                  <div
-                    className="
-                      flex
-                      h-16
-                      w-16
-                      items-center
-                      justify-center
-                      border
-                      border-[#D8CEC4]
-                      bg-[#F3EDE5]
-                      text-[#A58218]
-                      transition-all
-                      duration-500
-                      group-hover:scale-105
-                      group-hover:border-[#B28B52]
-                      group-hover:bg-[#211A17]
-                      group-hover:text-[#DFC25B]
-                    "
-                  >
-                    <Icon
-                      size={24}
-                      strokeWidth={1.35}
-                      className="
-                        transition-transform
-                        duration-500
-                        group-hover:rotate-3
-                      "
+                  <div className="relative h-[100px] w-[100px] shrink-0 overflow-hidden rounded-bl-[2.5rem] rounded-tr-[1.25rem] rounded-tl-[3.5rem] rounded-br-[3.5rem] bg-[#E3E9DF]">
+                    <img
+                      src={feature.image}
+                      alt={feature.imageAlt}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
+
+                    <div className="absolute inset-0 bg-[#31563A]/5 transition-colors duration-300 group-hover:bg-transparent" />
                   </div>
                 </div>
 
-                {/* ================= CONTENT ================= */}
+                {/* Icon and category */}
+                <div className="mb-4 flex items-center gap-2.5">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#31563A] text-[#F5F5F0] transition-transform duration-300 group-hover:rotate-[-6deg]">
+                    <Icon size={17} strokeWidth={1.6} />
+                  </span>
 
-                <div className="mt-7">
-                  <h3
-                    className="
-                      font-serif
-                      text-[25px]
-                      leading-tight
-                      text-[#211A17]
-                      transition-colors
-                      duration-500
-                      group-hover:text-[#8F6812]
-                    "
-                  >
-                    {feature.title}
-                  </h3>
-
-                  <p
-                    className="
-                      mt-4
-                      text-sm
-                      leading-6
-                      text-[#6A625D]
-                    "
-                  >
-                    {feature.description}
+                  <p className="text-[9px] font-semibold uppercase leading-4 tracking-[0.16em] text-[#607D65] sm:text-[10px]">
+                    {feature.eyebrow}
                   </p>
                 </div>
 
-                {/* ================= CTA ================= */}
+                {/* Content */}
+                <h3 className="mb-3 font-serif text-xl font-medium leading-tight text-[#234633] transition-colors duration-300 group-hover:text-[#607D65] sm:text-[22px]">
+                  {feature.title}
+                </h3>
 
-                <div className="mt-auto pt-8">
-                  <div
-                    className="
-                      flex
-                      items-center
-                      justify-between
-                      border-t
-                      border-[#E1D8D0]
-                      pt-5
-                    "
-                  >
-                    <span
-                      className="
-                        text-[10px]
-                        font-semibold
-                        uppercase
-                        tracking-[0.2em]
-                        text-[#211A17]
-                        transition-colors
-                        duration-500
-                        group-hover:text-[#A58218]
-                      "
-                    >
-                      {feature.linkText}
-                    </span>
+                <p className="mb-6 flex-1 text-[13px] leading-[1.75] text-[#687568]">
+                  {feature.description}
+                </p>
 
-                    <span
-                      className="
-                        flex
-                        h-9
-                        w-9
-                        items-center
-                        justify-center
-                        border
-                        border-[#D8CEC4]
-                        text-[#211A17]
-                        transition-all
-                        duration-500
-                        group-hover:border-[#B28B52]
-                        group-hover:bg-[#B28B52]
-                        group-hover:text-white
-                      "
-                    >
-                      <ArrowUpRight
-                        size={15}
-                        strokeWidth={1.5}
-                        className="
-                          transition-transform
-                          duration-500
-                          group-hover:translate-x-[2px]
-                          group-hover:-translate-y-[2px]
-                        "
-                      />
-                    </span>
-                  </div>
-                </div>
+                {/* Navigation link */}
+                <Link
+                  to={feature.link}
+                  className="inline-flex items-center gap-2 self-start border-b border-[#31563A]/25 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#31563A] outline-none transition-colors hover:border-[#31563A] focus-visible:ring-2 focus-visible:ring-[#31563A] focus-visible:ring-offset-4 sm:text-[11px]"
+                >
+                  {feature.linkText}
 
-                {/* ================= GOLD ACCENT ================= */}
-
-                <div
-                  className="
-                    absolute
-                    bottom-0
-                    left-0
-                    h-[2px]
-                    w-0
-                    bg-[#B28B52]
-                    transition-all
-                    duration-700
-                    group-hover:w-full
-                  "
-                />
-
-                {/* ================= DECORATIVE CORNER ================= */}
-
-                <div
-                  className="
-                    pointer-events-none
-                    absolute
-                    -right-10
-                    -top-10
-                    h-24
-                    w-24
-                    rounded-full
-                    border
-                    border-[#B28B52]/10
-                    transition-all
-                    duration-700
-                    group-hover:scale-[1.65]
-                    group-hover:border-[#B28B52]/25
-                  "
-                />
-              </Link>
+                  <ArrowRight
+                    size={15}
+                    strokeWidth={1.6}
+                    className="transition-transform duration-300 group-hover:translate-x-1"
+                  />
+                </Link>
+              </article>
             );
           })}
         </div>
 
-        {/* ================= BOTTOM BRAND LINE ================= */}
+        {/* Bottom signature */}
+        <footer className="mt-8 flex items-center justify-center gap-3 sm:mt-10">
+          <span className="h-px w-8 bg-[#78917A]" />
 
-        <div className="mt-14 flex items-center justify-center gap-4">
-          <span className="h-px w-16 bg-[#D8CEC4]" />
+          <p className="text-[9px] font-medium uppercase tracking-[0.28em] text-[#607D65] sm:text-[10px]">
+            Crafted with care
+          </p>
 
-          <span
-            className="
-              font-serif
-              text-sm
-              italic
-              tracking-wide
-              text-[#8E7A70]
-            "
-          >
-            Designed to complement your moments
-          </span>
-
-          <span className="h-px w-16 bg-[#D8CEC4]" />
-        </div>
+          <span className="h-px w-8 bg-[#78917A]" />
+        </footer>
       </div>
     </section>
   );

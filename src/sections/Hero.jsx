@@ -1,529 +1,232 @@
-import { useEffect, useRef } from "react";
-import { ArrowRight, ArrowUpRight, ChevronDown } from "lucide-react";
+
+import { useEffect, useRef, useState } from "react";
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowUpRight,
+  Volume2,
+  VolumeX,
+  Sparkles,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Hero = () => {
-  const imageRef = useRef(null);
-  const glowRef = useRef(null);
-  const frameRef = useRef(null);
-
-  /* =====================================================
-     MOUSE PARALLAX
-  ===================================================== */
+  const videoRef = useRef(null);
+  const [loaded, setLoaded] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [videoReady, setVideoReady] = useState(false);
 
   useEffect(() => {
-    const handleMouseMove = (event) => {
-      if (frameRef.current) return;
-
-      frameRef.current = requestAnimationFrame(() => {
-        const x = (event.clientX / window.innerWidth - 0.5) * 10;
-        const y = (event.clientY / window.innerHeight - 0.5) * 10;
-
-        if (imageRef.current) {
-          imageRef.current.style.transform = `
-            scale(1.06)
-            translate3d(${x / 3}px, ${y / 3}px, 0)
-          `;
-        }
-
-        if (glowRef.current) {
-          glowRef.current.style.transform = `
-            translate3d(${x * 2}px, ${y * 2}px, 0)
-          `;
-        }
-
-        frameRef.current = null;
-      });
-    };
-
-    window.addEventListener("mousemove", handleMouseMove, {
-      passive: true,
-    });
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
-      }
-    };
+    const timer = window.setTimeout(() => setLoaded(true), 100);
+    return () => window.clearTimeout(timer);
   }, []);
+
+  const toggleSound = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const nextMuted = !muted;
+    video.muted = nextMuted;
+    setMuted(nextMuted);
+
+    if (!nextMuted) {
+      try {
+        await video.play();
+      } catch {
+        video.muted = true;
+        setMuted(true);
+      }
+    }
+  };
 
   return (
     <section
-      className="
-        relative
-        mt-[101px]
-        min-h-[calc(100svh-101px)]
-        overflow-hidden
-        bg-[#F7F1F3]
-        text-[#352529]
-        sm:mt-[105px]
-        sm:min-h-[calc(100svh-105px)]
-        md:mt-[108px]
-        md:min-h-[calc(100svh-108px)]
-      "
+      aria-labelledby="hero-title"
+      className="relative isolate mt-0 min-h-[760px] overflow-hidden bg-[#10271E] text-[#F8F2E6] sm:min-h-[800px] lg:min-h-[100svh]"
     >
-      {/* =====================================================
-          BACKGROUND IMAGE
-      ===================================================== */}
-
-      <div className="absolute inset-0 overflow-hidden">
-        <img
-          ref={imageRef}
-          src="/assets/bg-image.png"
-          alt="YAMA FLYS luxury bangles"
-          className="
-            h-full
-            w-full
-            scale-[1.04]
-            object-cover
-            object-[65%_center]
-            opacity-[0.82]
-            transition-transform
-            duration-700
-            ease-out
-            sm:object-center
-          "
-        />
-
-        {/* Soft luxury overlay */}
-
-        <div
-          className="
-            absolute
-            inset-0
-            bg-gradient-to-r
-            from-[#F7F1F3]/[0.98]
-            via-[#F7F1F3]/[0.78]
-            to-[#F7F1F3]/[0.18]
-            sm:from-[#F7F1F3]/[0.96]
-            sm:via-[#F7F1F3]/[0.68]
-            sm:to-transparent
-          "
-        />
-
-        {/* Bottom fade */}
-
-        <div
-          className="
-            absolute
-            inset-0
-            bg-gradient-to-t
-            from-[#F7F1F3]
-            via-transparent
-            to-[#F7F1F3]/10
-          "
-        />
-
-        {/* Subtle pink atmosphere */}
-
-        <div
-          className="
-            absolute
-            inset-0
-            bg-[#B67888]/[0.035]
-            mix-blend-multiply
-          "
-        />
-      </div>
-
-      {/* =====================================================
-          SOFT GOLD GLOW
-      ===================================================== */}
-
-      <div
-        ref={glowRef}
-        className="
-          pointer-events-none
-          absolute
-          left-[70%]
-          top-[42%]
-          h-[260px]
-          w-[260px]
-          -translate-x-1/2
-          -translate-y-1/2
-          rounded-full
-          bg-[#C7A45B]/10
-          blur-[80px]
-          transition-transform
-          duration-700
-          sm:h-[350px]
-          sm:w-[350px]
-          lg:h-[420px]
-          lg:w-[420px]
-          lg:blur-[100px]
-        "
-      />
-
-      {/* =====================================================
-          DECORATIVE LINE
-      ===================================================== */}
-
-      <div
-        className="
-          pointer-events-none
-          absolute
-          right-[8%]
-          top-[15%]
-          hidden
-          h-[70%]
-          w-px
-          bg-gradient-to-b
-          from-transparent
-          via-[#C7A45B]/30
-          to-transparent
-          lg:block
-        "
-      />
-
-      {/* =====================================================
-          SMALL TOP LABEL
-      ===================================================== */}
-
-      <div
-        className="
-          pointer-events-none
-          absolute
-          right-[11%]
-          top-[17%]
-          hidden
-          lg:block
-        "
-      >
-        <span
-          className="
-            text-[8px]
-            uppercase
-            tracking-[0.4em]
-            text-[#9A7350]/60
-          "
+      {/* BACKGROUND VIDEO */}
+      <div className="absolute inset-0 -z-20 overflow-hidden bg-[#10271E]">
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          onCanPlay={() => setVideoReady(true)}
+          poster="/assets/bg-image.png"
+          aria-hidden="true"
+          className={`h-full w-full object-cover object-center transition-opacity duration-1000 ${
+            videoReady ? "opacity-100" : "opacity-0"
+          }`}
         >
-          YAMA FLYS
-        </span>
+          <source src="/assets/video1.mp4" type="video/mp4" />
+        </video>
+
+        {!videoReady && (
+          <img
+            src="/assets/bg-image.png"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
       </div>
 
-      {/* =====================================================
-          HERO CONTENT
-      ===================================================== */}
+      {/* CINEMATIC OVERLAYS */}
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[#071B12]/15" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-r from-[#071B12]/70 via-[#10271E]/30 to-[#10271E]/5" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-[#071B12]/45 via-transparent to-[#071B12]/10" />
 
+      {/* AMBIENT GOLD LIGHT */}
       <div
-        className="
-          relative
-          z-10
-          mx-auto
-          flex
-          min-h-[calc(100svh-101px)]
-          max-w-[1600px]
-          items-center
-          px-5
-          py-16
-          sm:min-h-[calc(100svh-105px)]
-          sm:px-8
-          sm:py-20
-          md:min-h-[calc(100svh-108px)]
-          md:px-12
-          lg:px-16
-          lg:py-20
-          xl:px-24
-        "
-      >
-        <div className="w-full max-w-4xl">
-          {/* =================================================
-              EYEBROW
-          ================================================= */}
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-32 top-10 -z-10 h-[380px] w-[380px] rounded-full bg-[#C9AA69]/10 blur-[120px] sm:h-[500px] sm:w-[500px]"
+      />
 
-          <div className="mb-5 flex items-center gap-3 sm:mb-7 sm:gap-4">
-            <span className="h-px w-7 bg-[#C7A45B] sm:w-10" />
-
-            <span
-              className="
-                text-[8px]
-                font-medium
-                uppercase
-                tracking-[0.28em]
-                text-[#9A7350]
-                sm:text-[10px]
-                sm:tracking-[0.4em]
-              "
-            >
-              YAMA FLYS JEWELLERY
+      {/* HERO CONTENT */}
+      <div className="relative mx-auto flex min-h-[760px] max-w-[1600px] items-center px-5 pb-28 pt-36 sm:min-h-[800px] sm:px-10 sm:pb-32 sm:pt-40 lg:min-h-[100svh] lg:px-20 lg:pb-28 lg:pt-40 xl:px-28">
+        <div
+          className={`w-full max-w-[950px] transition-all duration-1000 ease-out ${
+            loaded
+              ? "translate-y-0 opacity-100"
+              : "translate-y-8 opacity-0"
+          }`}
+        >
+          {/* BRAND EYEBROW */}
+          <div className="mb-8 flex items-center gap-4 sm:mb-10">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full border border-[#D9C28D]/50 bg-[#D9C28D]/10 text-[#E7D2A0] backdrop-blur-md">
+              <Sparkles size={19} strokeWidth={1.3} />
             </span>
+
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.34em] text-[#E7D2A0] sm:text-xs">
+                YAMA FLAYS
+              </p>
+              <p className="mt-1.5 text-[8px] uppercase tracking-[0.25em] text-white/75 sm:text-[9px]">
+                Jewellery · Elegance · You
+              </p>
+            </div>
+
+            <span className="h-px w-10 bg-[#D9C28D]/70 sm:w-16" />
           </div>
 
-          {/* =================================================
-              MAIN TITLE
-          ================================================= */}
-
+          {/* PREMIUM HEADING */}
           <h1
-            className="
-              max-w-5xl
-              font-serif
-              text-[3rem]
-              leading-[0.94]
-              tracking-[-0.04em]
-              text-[#352529]
-              sm:text-6xl
-              md:text-7xl
-              lg:text-[6.5rem]
-              xl:text-[7.2rem]
-            "
+            id="hero-title"
+            className="max-w-[1050px] font-serif text-[clamp(3.4rem,8.7vw,8.3rem)] font-normal leading-[0.88] tracking-[-0.065em] text-[#FFF9EF]"
           >
-            Elegance
+            Adorn your
             <br />
-            <span className="italic text-[#B67888]">Around Every Wrist</span>
+            moments with
+            <br />
+            <span className="italic text-[#E0C78D]">
+              a little magic.
+            </span>
           </h1>
 
-          {/* =================================================
-              DESCRIPTION
-          ================================================= */}
-
-          <p
-            className="
-              mt-6
-              max-w-[540px]
-              text-[13px]
-              leading-6
-              text-[#6F5B61]
-              sm:mt-7
-              sm:text-base
-              sm:leading-8
-              lg:text-lg
-            "
-          >
-            Discover beautifully crafted bangles designed to celebrate weddings,
-            festivals, special moments, and everyday elegance.
+          {/* LUXURY BRAND QUOTE */}
+          <p className="mt-7 max-w-[500px] font-serif text-lg italic leading-relaxed text-[#E8D5A7] sm:mt-8 sm:text-xl">
+            “Adorn your moments. Treasure your elegance.”
           </p>
 
-          {/* =================================================
-              BUTTONS
-          ================================================= */}
+          {/* DESCRIPTION */}
+          <p className="mt-4 max-w-[490px] text-sm leading-7 text-white/80 sm:text-base sm:leading-8">
+            Discover exquisite bangles crafted to complement your every
+            moment. From celebratory occasions to everyday elegance,
+            find the details that make every look unforgettable.
+          </p>
 
-          <div
-            className="
-              mt-8
-              flex
-              w-full
-              flex-col
-              gap-3
-              sm:mt-9
-              sm:w-auto
-              sm:flex-row
-            "
-          >
-            {/* SHOP BUTTON */}
-
+          {/* CTA BUTTONS */}
+          <div className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:flex-wrap">
             <Link
               to="/shop"
-              className="
-                group
-                inline-flex
-                min-h-[50px]
-                w-full
-                items-center
-                justify-center
-                gap-3
-                bg-[#493238]
-                px-6
-                py-3.5
-                text-[9px]
-                font-semibold
-                uppercase
-                tracking-[0.18em]
-                text-white
-                transition-all
-                duration-300
-                hover:bg-[#5B3E45]
-                hover:shadow-[0_15px_40px_rgba(73,50,56,0.20)]
-                sm:w-auto
-                sm:px-7
-                sm:text-[10px]
-              "
+              className="group inline-flex min-h-[56px] items-center justify-center gap-5 rounded-full bg-[#D9C28D] px-7 text-[10px] font-bold uppercase tracking-[0.17em] text-[#10271E] shadow-xl shadow-black/20 transition duration-300 hover:-translate-y-1 hover:bg-[#F0DDAE] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#10271E]"
             >
-              Shop Bangles
-              <ArrowRight
-                size={16}
-                strokeWidth={1.5}
-                className="
-                  transition-transform
-                  duration-300
-                  group-hover:translate-x-1
-                "
-              />
+              Discover Bangles
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#10271E]/10 transition-transform duration-300 group-hover:translate-x-1">
+                <ArrowRight size={15} />
+              </span>
             </Link>
-
-            {/* COLLECTION BUTTON */}
 
             <Link
               to="/collections"
-              className="
-                group
-                inline-flex
-                min-h-[50px]
-                w-full
-                items-center
-                justify-center
-                gap-3
-                border
-                border-[#B67888]/40
-                bg-white/40
-                px-6
-                py-3.5
-                text-[9px]
-                font-semibold
-                uppercase
-                tracking-[0.18em]
-                text-[#493238]
-                backdrop-blur-md
-                transition-all
-                duration-300
-                hover:border-[#B67888]
-                hover:bg-[#B67888]/10
-                sm:w-auto
-                sm:px-7
-                sm:text-[10px]
-              "
+              className="group inline-flex min-h-[56px] items-center justify-center gap-3 rounded-full border border-white/40 bg-white/[0.06] px-7 text-[10px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-[#D9C28D] hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9C28D]"
             >
-              Explore Collection
+              Explore Collections
               <ArrowUpRight
                 size={16}
-                strokeWidth={1.5}
-                className="
-                  transition-transform
-                  duration-300
-                  group-hover:-translate-y-0.5
-                  group-hover:translate-x-0.5
-                "
+                className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
               />
             </Link>
           </div>
 
-          {/* =================================================
-              ABOUT LINK
-          ================================================= */}
+          {/* BRAND SIGNATURE */}
+          <div className="mt-10 flex flex-wrap items-center gap-x-7 gap-y-3 border-t border-white/20 pt-5 sm:mt-14 sm:gap-x-10 sm:pt-6">
+            {[
+              { title: "Timeless", subtitle: "Designs" },
+              { title: "Beautiful", subtitle: "Details" },
+              { title: "Uniquely", subtitle: "Yours" },
+            ].map((item, index) => (
+              <div key={item.title} className="flex items-center gap-x-7 sm:gap-x-10">
+                {index > 0 && (
+                  <span className="h-10 w-px bg-white/20" />
+                )}
 
-          <Link
-            to="/about"
-            className="
-              group
-              mt-7
-              inline-flex
-              max-w-full
-              items-center
-              gap-3
-              text-[11px]
-              text-[#6F5B61]
-              transition-colors
-              duration-300
-              hover:text-[#B67888]
-              sm:mt-8
-              sm:text-xs
-            "
-          >
-            <span>Discover the YAMA FLYS story</span>
-
-            <span
-              className="
-                h-px
-                w-7
-                shrink-0
-                bg-[#C7A45B]/60
-                transition-all
-                duration-300
-                group-hover:w-11
-              "
-            />
-          </Link>
+                <div>
+                  <p className="font-serif text-lg text-[#E0C78D] sm:text-xl">
+                    {item.title}
+                  </p>
+                  <p className="mt-1 text-[8px] uppercase tracking-[0.19em] text-white/65 sm:text-[9px]">
+                    {item.subtitle}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* =====================================================
-          RIGHT SIDE BRAND TEXT
-      ===================================================== */}
-
-      <div
-        className="
-          pointer-events-none
-          absolute
-          bottom-16
-          right-8
-          z-10
-          hidden
-          flex-col
-          items-center
-          gap-3
-          lg:flex
-        "
+      {/* VIDEO SOUND CONTROL */}
+      <button
+        type="button"
+        onClick={toggleSound}
+        aria-label={muted ? "Turn video sound on" : "Mute video"}
+        className="absolute right-4 top-36 z-20 inline-flex h-10 items-center gap-2 rounded-full border border-white/25 bg-black/25 px-3 text-white backdrop-blur-lg transition hover:border-[#D9C28D] hover:text-[#E7D2A0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9C28D] sm:right-8 sm:top-36 sm:h-11 sm:px-4 lg:top-40"
       >
-        <span
-          className="
-            rotate-180
-            text-[8px]
-            uppercase
-            tracking-[0.4em]
-            text-[#9A7350]/60
-            [writing-mode:vertical-rl]
-          "
-        >
-          Handcrafted Elegance
+        {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+        <span className="text-[9px] font-medium uppercase tracking-[0.15em]">
+          {muted ? "Sound off" : "Sound on"}
         </span>
+      </button>
 
+      {/* VIDEO STATUS */}
+      <div className="absolute right-5 top-[184px] z-10 hidden items-center gap-2 text-[8px] uppercase tracking-[0.2em] text-white/65 sm:flex sm:right-8 sm:top-[194px] lg:top-[198px]">
         <span
-          className="
-            h-12
-            w-px
-            bg-[#C7A45B]/30
-          "
+          className={`h-1.5 w-1.5 rounded-full ${
+            videoReady ? "bg-[#D9C28D]" : "bg-white/40"
+          }`}
         />
+        {videoReady ? "The Yama experience" : "Loading visual"}
       </div>
 
-      {/* =====================================================
-          SCROLL INDICATOR
-      ===================================================== */}
-
+      {/* SCROLL CUE */}
       <a
         href="#experience"
-        className="
-          group
-          absolute
-          bottom-5
-          left-1/2
-          z-20
-          flex
-          -translate-x-1/2
-          flex-col
-          items-center
-          gap-1.5
-          text-[7px]
-          uppercase
-          tracking-[0.28em]
-          text-[#6F5B61]/60
-          transition-colors
-          duration-300
-          hover:text-[#B67888]
-          sm:bottom-6
-          sm:gap-2
-          sm:text-[8px]
-        "
+        aria-label="Scroll to discover more"
+        className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 rounded-full border border-white/20 bg-[#10271E]/50 px-5 py-3 text-[8px] font-medium uppercase tracking-[0.24em] text-white/80 backdrop-blur-md transition hover:border-[#D9C28D] hover:text-[#E7D2A0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9C28D] sm:bottom-7"
       >
-        <span>Scroll</span>
-
-        <ChevronDown
-          size={15}
-          strokeWidth={1.2}
-          className="
-            transition-transform
-            duration-300
-            group-hover:translate-y-1
-          "
-        />
+        <span>Scroll to discover</span>
+        <ArrowDown size={13} />
       </a>
 
-      {/* =====================================================
-          EXPERIENCE ANCHOR
-      ===================================================== */}
-
-      <div id="experience" className="absolute bottom-0" />
+      {/* RIGHT EDGE BRAND DETAIL */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-32 right-5 hidden items-center gap-3 [writing-mode:vertical-rl] text-[8px] uppercase tracking-[0.3em] text-white/50 xl:flex"
+      >
+        <span className="h-10 w-px bg-[#D9C28D]/60" />
+        Pretty things · Happy you
+      </div>
     </section>
   );
 };

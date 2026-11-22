@@ -1,16 +1,164 @@
+
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import {
+  ArrowRight,
+  ArrowUpRight,
+  CheckCircle2,
+  Gem,
   Mail,
   MapPin,
   MessageCircle,
   Phone,
   Send,
   Sparkles,
-  ArrowUpRight,
-  CheckCircle2,
 } from "lucide-react";
 
 import ScrollReveal from "../components/ScrollReveal";
+
+/* =========================================================
+   THEME
+========================================================= */
+
+const THEME = {
+  forest: "#1F3A2D",
+  deep: "#14291F",
+  green: "#426650",
+  sage: "#DCE8D9",
+  cream: "#F8F7F0",
+  gold: "#B99A55",
+  muted: "#6D7D70",
+  border: "#DDE5DA",
+};
+
+/* =========================================================
+   CONTACT DETAILS
+========================================================= */
+
+const CONTACT_DETAILS = [
+  {
+    title: "Phone",
+    value: "+91 75488 63591",
+    description: "Call us directly",
+    href: "tel:+917548863591",
+    Icon: Phone,
+  },
+  {
+    title: "Email",
+    value: "janumy686@gmail.com",
+    description: "Send us an email",
+    href: "mailto:janumy686@gmail.com",
+    Icon: Mail,
+  },
+];
+
+const ADDRESS = [
+  "No. 4/1301, Madha Kovil Street,",
+  "Near Vinnarasi Madha Church,",
+  "Thirunavallur, Maranodai,",
+  "Kallakurichi, Tamil Nadu - 607204",
+];
+
+/* =========================================================
+   REUSABLE CONTACT CARD
+========================================================= */
+
+const ContactCard = ({ Icon, title, value, description, href }) => {
+  const content = (
+    <>
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#DDE5DA] bg-[#EDF3E9] text-[#1F3A2D] transition duration-300 group-hover:border-[#B99A55] group-hover:bg-[#1F3A2D] group-hover:text-[#F8F7F0]">
+        <Icon size={19} strokeWidth={1.5} />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#718176]">
+          {title}
+        </p>
+
+        <p className="mt-1 break-words text-sm font-semibold text-[#1F3A2D] sm:text-base">
+          {value}
+        </p>
+
+        <p className="mt-1 text-xs text-[#718176]">{description}</p>
+      </div>
+
+      {href && (
+        <ArrowUpRight
+          size={17}
+          className="shrink-0 text-[#8A9A8B] transition duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-[#B99A55]"
+        />
+      )}
+    </>
+  );
+
+  const className =
+    "group flex items-center gap-4 rounded-2xl border border-[#DDE5DA] bg-white/80 p-4 transition duration-300 hover:-translate-y-1 hover:border-[#B99A55]/60 hover:shadow-[0_14px_35px_rgba(31,58,45,0.08)]";
+
+  return href ? (
+    <a href={href} className={className}>
+      {content}
+    </a>
+  ) : (
+    <div className={className}>{content}</div>
+  );
+};
+
+/* =========================================================
+   REUSABLE FORM FIELD
+========================================================= */
+
+const FormField = ({
+  label,
+  name,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  multiline = false,
+}) => {
+  const commonClasses =
+    "w-full rounded-xl border border-[#DDE5DA] bg-[#FBFCF8] px-4 py-3.5 text-sm text-[#1F3A2D] outline-none transition duration-300 placeholder:text-[#9AA69C] focus:border-[#B99A55] focus:bg-white focus:ring-4 focus:ring-[#B99A55]/10";
+
+  return (
+    <div>
+      <label
+        htmlFor={name}
+        className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.18em] text-[#426650]"
+      >
+        {label}
+      </label>
+
+      {multiline ? (
+        <textarea
+          id={name}
+          name={name}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          required
+          rows={5}
+          className={`${commonClasses} resize-y`}
+        />
+      ) : (
+        <input
+          id={name}
+          name={name}
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          required
+          autoComplete={name === "name" ? "name" : "tel"}
+          className={commonClasses}
+        />
+      )}
+    </div>
+  );
+};
+
+/* =========================================================
+   CONTACT PAGE
+========================================================= */
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -19,28 +167,17 @@ const Contact = () => {
     message: "",
   });
 
-  const [mousePosition, setMousePosition] = useState({
-    x: 50,
-    y: 50,
-  });
+  const handleChange = (event) => {
+    const { name, value } = event.target;
 
-  const [isHovering, setIsHovering] = useState(false);
-
-  /* =========================================================
-     FORM HANDLING
-  ========================================================= */
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
+    setFormData((previous) => ({
+      ...previous,
       [name]: value,
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = (event) => {
+    event.preventDefault();
 
     const message = `Hello YAMA FLYS,
 
@@ -51,689 +188,327 @@ Message:
 ${formData.message}`;
 
     const whatsappUrl = `https://wa.me/917548863591?text=${encodeURIComponent(
-      message,
+      message
     )}`;
 
-    window.open(whatsappUrl, "_blank");
-  };
-
-  /* =========================================================
-     MOUSE GLOW
-  ========================================================= */
-
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-    setMousePosition({ x, y });
-  };
-
-  const handleMouseEnter = () => {
-    setIsHovering(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovering(false);
-
-    setMousePosition({
-      x: 50,
-      y: 50,
-    });
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
   };
 
   return (
-    <>
+    <main className="min-h-screen overflow-hidden bg-[#F8F7F0] text-[#1F3A2D]">
       {/* =====================================================
-          PAGE ANIMATIONS
+          HERO
       ===================================================== */}
 
-      <style>{`
-        @keyframes contactFloat {
-          0%,
-          100% {
-            transform: translateY(0);
-          }
-
-          50% {
-            transform: translateY(-10px);
-          }
-        }
-
-        @keyframes contactRotate {
-          from {
-            transform: rotate(0deg);
-          }
-
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        @keyframes contactPulse {
-          0%,
-          100% {
-            transform: scale(1);
-            opacity: 0.12;
-          }
-
-          50% {
-            transform: scale(1.12);
-            opacity: 0.25;
-          }
-        }
-
-        @keyframes contactShimmer {
-          0% {
-            transform: translateX(-140%);
-          }
-
-          100% {
-            transform: translateX(140%);
-          }
-        }
-
-        @keyframes contactLine {
-          from {
-            width: 0;
-            opacity: 0;
-          }
-
-          to {
-            width: 64px;
-            opacity: 1;
-          }
-        }
-
-        @keyframes contactGlow {
-          0%,
-          100% {
-            opacity: 0.35;
-          }
-
-          50% {
-            opacity: 0.7;
-          }
-        }
-
-        @keyframes contactBounce {
-          0%,
-          100% {
-            transform: translateY(0);
-          }
-
-          50% {
-            transform: translateY(-4px);
-          }
-        }
-      `}</style>
-
-      <main
-        onMouseMove={handleMouseMove}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        className="relative min-h-screen overflow-hidden bg-[#F5EEF7] text-[#171717]"
-      >
-        {/* =====================================================
-            GLOBAL CURSOR GLOW
-        ===================================================== */}
-
-        <div
-          className={`pointer-events-none fixed inset-0 z-0 transition-opacity duration-700 ${
-            isHovering ? "opacity-100" : "opacity-0"
-          }`}
-          style={{
-            background: `
-              radial-gradient(
-                circle 440px at ${mousePosition.x}% ${mousePosition.y}%,
-                rgba(201,162,39,0.10),
-                rgba(116,82,127,0.11) 35%,
-                transparent 72%
-              )
-            `,
-          }}
-        />
-
-        {/* =====================================================
-            AMBIENT BACKGROUND GLOWS
-        ===================================================== */}
-
-        <div
-          className="pointer-events-none absolute -left-52 top-20 h-[34rem] w-[34rem] rounded-full bg-[#74527F]/10 blur-3xl"
-          style={{
-            animation: "contactPulse 10s ease-in-out infinite",
-          }}
-        />
-
-        <div
-          className="pointer-events-none absolute -right-52 top-[42%] h-[32rem] w-[32rem] rounded-full bg-[#C9A227]/8 blur-3xl"
-          style={{
-            animation: "contactPulse 12s ease-in-out infinite reverse",
-          }}
-        />
-
-        {/* =====================================================
-            HERO
-        ===================================================== */}
-
-        <section className="relative z-10 overflow-hidden bg-gradient-to-br from-[#BDA3C8] via-[#CDB8D6] to-[#E0CEE5] px-5 py-20 text-center sm:px-6 sm:py-24 md:py-28 lg:py-32">
-          {/* Large Rings */}
-
-          <div
-            className="pointer-events-none absolute -right-28 -top-28 h-80 w-80 rounded-full border border-[#C9A227]/20"
-            style={{
-              animation: "contactRotate 30s linear infinite",
-            }}
-          />
-
-          <div
-            className="pointer-events-none absolute -bottom-28 -left-28 h-72 w-72 rounded-full border border-white/20"
-            style={{
-              animation: "contactRotate 34s linear infinite reverse",
-            }}
-          />
-
-          {/* Floating Glow */}
-
-          <div
-            className="pointer-events-none absolute left-[15%] top-[30%] h-24 w-24 rounded-full bg-white/15 blur-2xl"
-            style={{
-              animation: "contactGlow 5s ease-in-out infinite",
-            }}
-          />
-
-          <ScrollReveal>
-            <div className="relative mx-auto max-w-4xl">
-              {/* Icon */}
-
-              <div
-                className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full border border-[#C9A227]/40 bg-white/55 shadow-[0_10px_30px_rgba(60,36,73,0.10)] backdrop-blur-md"
-                style={{
-                  animation: "contactFloat 5s ease-in-out infinite",
-                }}
-              >
-                <Sparkles
-                  size={22}
-                  strokeWidth={1.25}
-                  className="text-[#C9A227]"
-                />
-              </div>
-
-              {/* Eyebrow */}
-
-              <p className="text-[10px] font-medium uppercase tracking-[0.38em] text-[#705512] sm:text-xs">
-                YAMA FLYS
-              </p>
-
-              {/* Heading */}
-
-              <h1 className="mt-4 font-serif text-5xl leading-tight text-[#171717] sm:text-6xl md:text-7xl">
-                Contact
-                <span className="block italic text-[#5E4168]">YAMA FLYS</span>
-              </h1>
-
-              {/* Gold Line */}
-
-              <div
-                className="mx-auto mt-6 h-[2px] bg-[#C9A227]"
-                style={{
-                  animation: "contactLine 1.1s ease-out forwards",
-                }}
-              />
-
-              {/* Description */}
-
-              <p className="mx-auto mt-7 max-w-2xl text-sm leading-7 text-[#514957] md:text-base md:leading-8">
-                Have a question about our bangles, orders, or collections?
-                Connect with YAMA FLYS and we’ll be happy to assist you.
-              </p>
-            </div>
-          </ScrollReveal>
-        </section>
-
-        {/* =====================================================
-            CONTACT CONTENT
-        ===================================================== */}
-
-        <section className="relative z-10 px-5 py-16 sm:px-6 md:px-10 md:py-24 lg:px-16">
-          <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
-            {/* =================================================
-                LEFT - INFORMATION
-            ================================================= */}
+      <section className="relative px-4 pb-12 pt-28 sm:px-6 sm:pb-16 sm:pt-32 lg:px-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+            {/* Hero text */}
 
             <ScrollReveal>
-              <div className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/70 p-7 shadow-[0_20px_60px_rgba(66,45,74,0.10)] backdrop-blur-xl sm:p-9 md:p-10">
-                {/* Decorative Ring */}
+              <div className="relative z-10">
+                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#DDE5DA] bg-white/80 px-4 py-2">
+                  <Sparkles size={14} className="text-[#B99A55]" />
 
-                <div
-                  className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full border border-[#C9A227]/20"
-                  style={{
-                    animation: "contactRotate 28s linear infinite",
-                  }}
-                />
+                  <span className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[#426650] sm:text-[10px]">
+                    We're Here to Help
+                  </span>
+                </div>
 
-                <div className="relative">
-                  {/* Label */}
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#B99A55]">
+                  YAMA FLYS
+                </p>
 
-                  <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-[#856617] sm:text-xs">
-                    Contact Information
-                  </p>
+                <h1 className="mt-5 font-serif text-5xl leading-[1.08] tracking-tight text-[#1F3A2D] sm:text-6xl md:text-7xl">
+                  Let's Talk
+                  <span className="mt-1 block italic text-[#64816A]">
+                    Beautiful.
+                  </span>
+                </h1>
 
-                  {/* Heading */}
+                <p className="mt-6 max-w-lg text-sm leading-7 text-[#6D7D70] sm:text-base sm:leading-8">
+                  Have a question about our bangles, an order, or a collection?
+                  We'd love to hear from you and help you find something special.
+                </p>
 
-                  <h2 className="mt-4 font-serif text-4xl leading-tight text-[#171717] md:text-5xl">
-                    We'd Love to
-                    <span className="block italic text-[#74527F]">
-                      Hear From You
-                    </span>
-                  </h2>
-
-                  {/* Line */}
-
-                  <div className="mt-6 h-[2px] w-14 bg-[#C9A227]" />
-
-                  {/* Description */}
-
-                  <p className="mt-7 text-sm leading-7 text-[#68606D]">
-                    Reach out to YAMA FLYS for product enquiries, order
-                    assistance, collection details, or any other questions.
-                  </p>
-
-                  {/* Contact Items */}
-
-                  <div className="mt-10 space-y-5">
-                    {/* Phone */}
-
-                    <a
-                      href="tel:+917548863591"
-                      className="group/item flex items-start gap-4 rounded-2xl border border-[#E6DDEA] bg-white/70 p-4 transition-all duration-500 hover:-translate-y-1 hover:border-[#C9A227]/40 hover:bg-white hover:shadow-[0_15px_35px_rgba(60,36,73,0.08)]"
-                    >
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#D9C7E0] bg-[#F7F1F9] text-[#74527F] transition-all duration-500 group-hover/item:border-[#C9A227] group-hover/item:bg-[#3C2449] group-hover/item:text-[#D7BA62]">
-                        <Phone size={18} strokeWidth={1.4} />
-                      </div>
-
-                      <div className="min-w-0">
-                        <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-[#917D9D]">
-                          Phone
-                        </p>
-
-                        <p className="mt-1 text-sm font-medium text-[#211B28]">
-                          +91 75488 63591
-                        </p>
-
-                        <p className="mt-1 text-xs text-[#8A808F]">
-                          Call us directly
-                        </p>
-                      </div>
-
-                      <ArrowUpRight
-                        size={15}
-                        strokeWidth={1.4}
-                        className="ml-auto mt-1 text-[#B5A9BB] opacity-0 transition-all duration-300 group-hover/item:translate-x-1 group-hover/item:-translate-y-1 group-hover/item:text-[#C9A227] group-hover/item:opacity-100"
-                      />
-                    </a>
-
-                    {/* Email */}
-
-                    <a
-                      href="mailto:janumy686@gmail.com"
-                      className="group/item flex items-start gap-4 rounded-2xl border border-[#E6DDEA] bg-white/70 p-4 transition-all duration-500 hover:-translate-y-1 hover:border-[#C9A227]/40 hover:bg-white hover:shadow-[0_15px_35px_rgba(60,36,73,0.08)]"
-                    >
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#D9C7E0] bg-[#F7F1F9] text-[#74527F] transition-all duration-500 group-hover/item:border-[#C9A227] group-hover/item:bg-[#3C2449] group-hover/item:text-[#D7BA62]">
-                        <Mail size={18} strokeWidth={1.4} />
-                      </div>
-
-                      <div className="min-w-0">
-                        <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-[#917D9D]">
-                          Email
-                        </p>
-
-                        <p className="mt-1 break-all text-sm font-medium text-[#211B28]">
-                          janumy686@gmail.com
-                        </p>
-
-                        <p className="mt-1 text-xs text-[#8A808F]">
-                          Send us an email
-                        </p>
-                      </div>
-
-                      <ArrowUpRight
-                        size={15}
-                        strokeWidth={1.4}
-                        className="ml-auto mt-1 text-[#B5A9BB] opacity-0 transition-all duration-300 group-hover/item:translate-x-1 group-hover/item:-translate-y-1 group-hover/item:text-[#C9A227] group-hover/item:opacity-100"
-                      />
-                    </a>
-
-                    {/* Address */}
-
-                    <div className="group/item flex items-start gap-4 rounded-2xl border border-[#E6DDEA] bg-white/70 p-4 transition-all duration-500 hover:-translate-y-1 hover:border-[#C9A227]/40 hover:bg-white hover:shadow-[0_15px_35px_rgba(60,36,73,0.08)]">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#D9C7E0] bg-[#F7F1F9] text-[#74527F] transition-all duration-500 group-hover/item:border-[#C9A227] group-hover/item:bg-[#3C2449] group-hover/item:text-[#D7BA62]">
-                        <MapPin size={18} strokeWidth={1.4} />
-                      </div>
-
-                      <div>
-                        <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-[#917D9D]">
-                          Address
-                        </p>
-
-                        <p className="mt-1 text-sm font-medium leading-6 text-[#211B28]">
-                          No. 4/1301, Madha Kovil Street,
-                          <br />
-                          Near Vinnarasi Madha Church,
-                          <br />
-                          Thirunavallur, Maranodai,
-                          <br />
-                          Kallakurichi, Tamil Nadu - 607204
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Small Note */}
-
-                  <div className="mt-8 flex items-center gap-3 rounded-xl border border-[#E4D8E9] bg-[#F8F3FA] p-4">
-                    <CheckCircle2
-                      size={18}
-                      strokeWidth={1.4}
-                      className="shrink-0 text-[#C9A227]"
+                <div className="mt-8 flex flex-wrap items-center gap-4">
+                  <a
+                    href="#contact-form"
+                    className="group inline-flex min-h-12 items-center gap-3 rounded-full bg-[#1F3A2D] px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-white transition duration-300 hover:-translate-y-1 hover:bg-[#426650] hover:shadow-lg"
+                  >
+                    Send a Message
+                    <ArrowRight
+                      size={16}
+                      className="transition-transform duration-300 group-hover:translate-x-1"
                     />
-
-                    <p className="text-xs leading-5 text-[#756B7A]">
-                      We're here to help with product questions, availability,
-                      and order assistance.
-                    </p>
-                  </div>
-
-                  {/* WhatsApp Mini CTA */}
+                  </a>
 
                   <a
                     href="https://wa.me/917548863591"
                     target="_blank"
                     rel="noreferrer"
-                    className="group/whatsapp mt-8 inline-flex items-center gap-3 rounded-full border border-[#3C2449]/15 bg-[#3C2449] px-6 py-3.5 text-[10px] font-medium uppercase tracking-[0.18em] text-white transition-all duration-300 hover:-translate-y-1 hover:bg-[#4A2E59] hover:shadow-xl"
+                    className="inline-flex min-h-12 items-center gap-2 rounded-full border border-[#DDE5DA] bg-white px-5 py-3 text-xs font-semibold text-[#1F3A2D] transition hover:border-[#B99A55] hover:bg-[#EDF3E9]"
                   >
-                    <MessageCircle
-                      size={16}
-                      strokeWidth={1.4}
-                      className="text-[#D7BA62]"
-                    />
-                    WhatsApp Us
-                    <ArrowUpRight
-                      size={14}
-                      strokeWidth={1.4}
-                      className="transition-transform duration-300 group-hover/whatsapp:translate-x-1 group-hover/whatsapp:-translate-y-1"
-                    />
+                    <MessageCircle size={16} />
+                    WhatsApp
                   </a>
+                </div>
+
+                <div className="mt-8 flex items-center gap-3 text-xs text-[#718176]">
+                  <CheckCircle2 size={17} className="shrink-0 text-[#64816A]" />
+                  Personal assistance for product and order enquiries.
                 </div>
               </div>
             </ScrollReveal>
 
-            {/* =================================================
-                RIGHT - FORM
-            ================================================= */}
+            {/* Bangle image */}
 
             <ScrollReveal delay={120}>
-              <div className="relative overflow-hidden rounded-[2rem] border border-[#DCCDE2] bg-white p-7 shadow-[0_25px_70px_rgba(66,45,74,0.12)] sm:p-9 md:p-10 lg:p-12">
-                {/* Top Glow */}
+              <div className="group relative mx-auto w-full max-w-xl">
+                <div className="absolute -inset-3 rounded-[2rem] bg-[#DCE8D9]/70 blur-2xl" />
 
-                <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#C9A227]/8 blur-3xl" />
+                <div className="relative overflow-hidden rounded-[1.75rem] border border-white bg-white p-2 shadow-[0_25px_70px_rgba(31,58,45,0.13)]">
+                  <div className="relative aspect-[4/4.5] overflow-hidden rounded-[1.35rem] bg-[#E9EBDD] sm:aspect-[4/3.6] lg:aspect-[4/4.6]">
+                    <img
+                      src="/assets/bg-300.png"
+                      alt="Elegant green bangles styled for YAMA FLYS jewellery"
+                      fetchPriority="high"
+                      className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+                    />
 
-                {/* Corner Ring */}
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#14291F]/55 via-transparent to-[#14291F]/5" />
 
-                <div
-                  className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full border border-[#C9A227]/15"
-                  style={{
-                    animation: "contactRotate 28s linear infinite",
-                  }}
-                />
-
-                <div className="relative">
-                  {/* Form Header */}
-
-                  <div className="mb-9">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F5EEF7] text-[#74527F]">
-                        <Send size={17} strokeWidth={1.4} />
+                    <div className="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/30 bg-[#14291F]/50 p-4 text-white backdrop-blur-md sm:bottom-7 sm:left-7 sm:right-7 sm:p-5">
+                      <div className="flex items-center gap-2 text-[#E2D0A0]">
+                        <Gem size={15} />
+                        <span className="text-[9px] font-semibold uppercase tracking-[0.25em]">
+                          YAMA FLYS
+                        </span>
                       </div>
 
-                      <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-[#856617] sm:text-xs">
-                        Send a Message
+                      <p className="mt-2 font-serif text-2xl sm:text-3xl">
+                        Elegance in every detail.
                       </p>
                     </div>
-
-                    <h2 className="mt-5 font-serif text-4xl leading-tight text-[#171717] md:text-5xl">
-                      How Can We
-                      <span className="block italic text-[#74527F]">Help?</span>
-                    </h2>
-
-                    <p className="mt-4 max-w-lg text-sm leading-7 text-[#746B78]">
-                      Fill in the details below and your message will open
-                      directly in WhatsApp.
-                    </p>
-
-                    <div className="mt-6 h-[2px] w-12 bg-[#C9A227]" />
                   </div>
+                </div>
 
-                  {/* Form */}
-
-                  <form onSubmit={handleSubmit} className="space-y-7">
-                    {/* Name */}
-
-                    <div className="group/field">
-                      <label
-                        htmlFor="name"
-                        className="mb-2 block text-[9px] font-medium uppercase tracking-[0.22em] text-[#756A7A]"
-                      >
-                        Your Name
-                      </label>
-
-                      <div className="relative">
-                        <input
-                          id="name"
-                          name="name"
-                          type="text"
-                          value={formData.name}
-                          onChange={handleChange}
-                          required
-                          placeholder="Enter your name"
-                          className="w-full rounded-xl border border-[#DED3E3] bg-[#FBF9FC] px-4 py-4 text-sm text-[#211B28] outline-none transition-all duration-300 placeholder:text-[#ABA3AF] focus:border-[#C9A227] focus:bg-white focus:shadow-[0_0_0_4px_rgba(201,162,39,0.07)]"
-                        />
-
-                        <div className="pointer-events-none absolute bottom-0 left-4 right-4 h-[2px] origin-left scale-x-0 bg-[#C9A227] transition-transform duration-300 group-focus-within/field:scale-x-100" />
-                      </div>
-                    </div>
-
-                    {/* Phone */}
-
-                    <div className="group/field">
-                      <label
-                        htmlFor="phone"
-                        className="mb-2 block text-[9px] font-medium uppercase tracking-[0.22em] text-[#756A7A]"
-                      >
-                        Phone Number
-                      </label>
-
-                      <div className="relative">
-                        <input
-                          id="phone"
-                          name="phone"
-                          type="tel"
-                          value={formData.phone}
-                          onChange={handleChange}
-                          required
-                          placeholder="Enter your phone number"
-                          className="w-full rounded-xl border border-[#DED3E3] bg-[#FBF9FC] px-4 py-4 text-sm text-[#211B28] outline-none transition-all duration-300 placeholder:text-[#ABA3AF] focus:border-[#C9A227] focus:bg-white focus:shadow-[0_0_0_4px_rgba(201,162,39,0.07)]"
-                        />
-
-                        <div className="pointer-events-none absolute bottom-0 left-4 right-4 h-[2px] origin-left scale-x-0 bg-[#C9A227] transition-transform duration-300 group-focus-within/field:scale-x-100" />
-                      </div>
-                    </div>
-
-                    {/* Message */}
-
-                    <div className="group/field">
-                      <label
-                        htmlFor="message"
-                        className="mb-2 block text-[9px] font-medium uppercase tracking-[0.22em] text-[#756A7A]"
-                      >
-                        Message
-                      </label>
-
-                      <div className="relative">
-                        <textarea
-                          id="message"
-                          name="message"
-                          value={formData.message}
-                          onChange={handleChange}
-                          required
-                          rows="6"
-                          placeholder="Write your message..."
-                          className="w-full resize-none rounded-xl border border-[#DED3E3] bg-[#FBF9FC] px-4 py-4 text-sm leading-7 text-[#211B28] outline-none transition-all duration-300 placeholder:text-[#ABA3AF] focus:border-[#C9A227] focus:bg-white focus:shadow-[0_0_0_4px_rgba(201,162,39,0.07)]"
-                        />
-
-                        <div className="pointer-events-none absolute bottom-0 left-4 right-4 h-[2px] origin-left scale-x-0 bg-[#C9A227] transition-transform duration-300 group-focus-within/field:scale-x-100" />
-                      </div>
-                    </div>
-
-                    {/* Submit */}
-
-                    <button
-                      type="submit"
-                      className="group/button relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-xl bg-[#3C2449] px-7 py-4.5 text-[10px] font-medium uppercase tracking-[0.22em] text-white shadow-[0_15px_35px_rgba(60,36,73,0.20)] transition-all duration-300 hover:-translate-y-1 hover:bg-[#4B2F59] hover:shadow-[0_20px_45px_rgba(60,36,73,0.28)]"
-                    >
-                      {/* Shimmer */}
-
-                      <span
-                        className="absolute inset-y-0 left-0 w-1/3 -translate-x-[140%] bg-gradient-to-r from-transparent via-white/25 to-transparent"
-                        style={{
-                          animation: "contactShimmer 4s ease-in-out infinite",
-                        }}
-                      />
-
-                      <span className="relative z-10">Send via WhatsApp</span>
-
-                      <Send
-                        size={16}
-                        strokeWidth={1.4}
-                        className="relative z-10 text-[#D7BA62] transition-transform duration-300 group-hover/button:translate-x-1"
-                      />
-                    </button>
-
-                    <p className="text-center text-[10px] leading-5 text-[#978D9D]">
-                      Your message will be prepared and opened in WhatsApp.
-                    </p>
-                  </form>
+                <div className="absolute -right-2 -top-3 flex h-14 w-14 items-center justify-center rounded-full border border-[#DDE5DA] bg-[#F8F7F0] text-[#B99A55] shadow-lg sm:-right-4 sm:-top-4 sm:h-16 sm:w-16">
+                  <Sparkles size={23} strokeWidth={1.4} />
                 </div>
               </div>
             </ScrollReveal>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* =====================================================
-            WHATSAPP CTA
-        ===================================================== */}
+      {/* =====================================================
+          CONTACT CONTENT
+      ===================================================== */}
 
-        <section className="relative z-10 overflow-hidden bg-[#3C2449] px-5 py-20 text-center sm:px-6 md:py-24">
-          {/* Background Glow */}
+      <section className="px-4 py-12 sm:px-6 sm:py-16 lg:px-12 lg:py-20">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-10 max-w-2xl sm:mb-12">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#B99A55]">
+              Get in Touch
+            </p>
 
-          <div
-            className="pointer-events-none absolute -left-40 top-1/2 h-80 w-80 -translate-y-1/2 rounded-full bg-[#80558E]/20 blur-3xl"
-            style={{
-              animation: "contactPulse 9s ease-in-out infinite",
-            }}
-          />
+            <h2 className="mt-3 font-serif text-3xl leading-tight text-[#1F3A2D] sm:text-4xl md:text-5xl">
+              We're only a message away.
+            </h2>
 
-          <div
-            className="pointer-events-none absolute -right-40 bottom-[-6rem] h-80 w-80 rounded-full bg-[#C9A227]/10 blur-3xl"
-            style={{
-              animation: "contactPulse 10s ease-in-out infinite reverse",
-            }}
-          />
+            <p className="mt-4 text-sm leading-7 text-[#6D7D70] sm:text-base">
+              Connect with us for product details, availability, and order
+              assistance.
+            </p>
+          </div>
 
-          {/* Rotating Ring */}
+          <div className="grid items-start gap-7 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10">
+            {/* Contact information */}
 
-          <div
-            className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full border border-[#C9A227]/15"
-            style={{
-              animation: "contactRotate 28s linear infinite",
-            }}
-          />
+            <ScrollReveal>
+              <section className="rounded-[1.75rem] border border-[#DDE5DA] bg-white/80 p-5 shadow-[0_16px_45px_rgba(31,58,45,0.05)] sm:p-7 md:p-8">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EDF3E9] text-[#1F3A2D]">
+                    <Phone size={19} />
+                  </div>
 
-          <div
-            className="pointer-events-none absolute -bottom-28 -left-28 h-60 w-60 rounded-full border border-white/10"
-            style={{
-              animation: "contactRotate 32s linear infinite reverse",
-            }}
-          />
+                  <div>
+                    <h3 className="font-serif text-2xl text-[#1F3A2D]">
+                      Contact Information
+                    </h3>
 
-          <ScrollReveal>
-            <div className="relative mx-auto max-w-3xl">
-              {/* Icon */}
+                    <p className="mt-1 text-xs text-[#718176]">
+                      Choose the easiest way to reach us.
+                    </p>
+                  </div>
+                </div>
 
-              <div
-                className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-[#C9A227]/35 bg-white/5 backdrop-blur-md"
-                style={{
-                  animation: "contactBounce 4s ease-in-out infinite",
-                }}
+                <div className="mt-7 space-y-3">
+                  {CONTACT_DETAILS.map((item) => (
+                    <ContactCard key={item.title} {...item} />
+                  ))}
+
+                  <ContactCard
+                    Icon={MapPin}
+                    title="Address"
+                    value={ADDRESS.map((line) => line).join(" ")}
+                    description="Our location"
+                  />
+                </div>
+
+                <div className="mt-6 rounded-2xl border border-[#DDE5DA] bg-[#F3F6EF] p-4">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2
+                      size={19}
+                      className="mt-0.5 shrink-0 text-[#426650]"
+                    />
+
+                    <div>
+                      <p className="text-sm font-semibold text-[#1F3A2D]">
+                        How can we help?
+                      </p>
+
+                      <p className="mt-1 text-xs leading-6 text-[#6D7D70]">
+                        Ask us about designs, product availability, or an
+                        existing order.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <a
+                  href="https://wa.me/917548863591"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-full border border-[#1F3A2D] bg-[#1F3A2D] px-5 py-3.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[#426650]"
+                >
+                  <MessageCircle size={17} />
+                  Chat on WhatsApp
+                  <ArrowUpRight size={15} />
+                </a>
+              </section>
+            </ScrollReveal>
+
+            {/* Contact form */}
+
+            <ScrollReveal delay={100}>
+              <section
+                id="contact-form"
+                className="scroll-mt-28 rounded-[1.75rem] border border-[#DDE5DA] bg-white p-5 shadow-[0_16px_45px_rgba(31,58,45,0.06)] sm:p-7 md:p-9"
               >
-                <MessageCircle
-                  size={24}
-                  strokeWidth={1.25}
-                  className="text-[#D7BA62]"
-                />
-              </div>
+                <div className="mb-8">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EDF3E9] text-[#1F3A2D]">
+                    <Send size={19} />
+                  </div>
 
-              {/* Label */}
+                  <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#B99A55]">
+                    Write to Us
+                  </p>
 
-              <p className="mt-6 text-[10px] font-medium uppercase tracking-[0.32em] text-[#D7BA62] sm:text-xs">
-                Need Quick Assistance?
-              </p>
+                  <h2 className="mt-2 font-serif text-3xl text-[#1F3A2D] sm:text-4xl">
+                    How can we help?
+                  </h2>
 
-              {/* Heading */}
+                  <p className="mt-3 text-sm leading-6 text-[#6D7D70]">
+                    Complete the form and we'll prepare your message in
+                    WhatsApp.
+                  </p>
+                </div>
 
-              <h2 className="mt-4 font-serif text-4xl leading-tight text-white sm:text-5xl md:text-6xl">
-                Chat With
-                <span className="block italic text-[#D7BA62]">YAMA FLYS</span>
-              </h2>
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <FormField
+                    label="Your Name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Enter your name"
+                  />
 
-              {/* Description */}
+                  <FormField
+                    label="Phone Number"
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="Enter your phone number"
+                  />
 
-              <p className="mx-auto mt-6 max-w-xl text-sm leading-7 text-[#D7CADD] md:text-base">
-                For quick questions about products, orders, or availability,
-                connect with us directly on WhatsApp.
-              </p>
+                  <FormField
+                    label="Your Message"
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    placeholder="Tell us how we can help..."
+                    multiline
+                  />
 
-              {/* Button */}
+                  <button
+                    type="submit"
+                    className="group flex min-h-12 w-full items-center justify-center gap-3 rounded-xl bg-[#1F3A2D] px-6 py-4 text-xs font-semibold uppercase tracking-[0.15em] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-[#426650] hover:shadow-lg"
+                  >
+                    Prepare WhatsApp Message
+                    <ArrowRight
+                      size={17}
+                      className="transition-transform duration-300 group-hover:translate-x-1"
+                    />
+                  </button>
 
-              <a
-                href="https://wa.me/917548863591"
-                target="_blank"
-                rel="noreferrer"
-                className="group/cta relative mt-9 inline-flex items-center gap-3 overflow-hidden rounded-full bg-[#C9A227] px-8 py-4 text-[10px] font-medium uppercase tracking-[0.22em] text-[#171717] shadow-[0_15px_35px_rgba(0,0,0,0.20)] transition-all duration-300 hover:-translate-y-1 hover:bg-[#DFC25B] hover:shadow-[0_20px_45px_rgba(0,0,0,0.28)]"
-              >
-                {/* Shimmer */}
+                  <p className="text-center text-[11px] leading-5 text-[#718176]">
+                    WhatsApp will open with your message ready to send.
+                  </p>
+                </form>
+              </section>
+            </ScrollReveal>
+          </div>
+        </div>
+      </section>
 
-                <span
-                  className="absolute inset-y-0 left-0 w-1/3 -translate-x-[140%] bg-gradient-to-r from-transparent via-white/50 to-transparent"
-                  style={{
-                    animation: "contactShimmer 3.5s ease-in-out infinite",
-                  }}
-                />
+      {/* =====================================================
+          BOTTOM CTA
+      ===================================================== */}
 
-                <span className="relative z-10">WhatsApp Us</span>
+      <section className="relative overflow-hidden bg-[#14291F] px-5 py-16 text-center sm:px-6 sm:py-20">
+        <div className="pointer-events-none absolute -left-20 -top-28 h-64 w-64 rounded-full bg-[#64816A]/20 blur-3xl" />
 
-                <MessageCircle
-                  size={16}
-                  strokeWidth={1.4}
-                  className="relative z-10 transition-transform duration-300 group-hover/cta:scale-110"
-                />
-              </a>
+        <div className="pointer-events-none absolute -bottom-32 -right-20 h-72 w-72 rounded-full bg-[#B99A55]/10 blur-3xl" />
+
+        <ScrollReveal>
+          <div className="relative mx-auto max-w-3xl">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-[#B99A55]/40 bg-white/5 text-[#D8C18B]">
+              <MessageCircle size={22} />
             </div>
-          </ScrollReveal>
-        </section>
-      </main>
-    </>
+
+            <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.3em] text-[#D8C18B]">
+              We're Happy to Help
+            </p>
+
+            <h2 className="mt-4 font-serif text-4xl leading-tight text-[#F8F7F0] sm:text-5xl md:text-6xl">
+              Let's make it
+              <span className="block italic text-[#B9CFB5]">
+                beautiful.
+              </span>
+            </h2>
+
+            <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-[#CFD9CD]">
+              Have a question or need a little guidance? Reach out to YAMA FLYS
+              and let's find the right design for you.
+            </p>
+
+            <a
+              href="https://wa.me/917548863591"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-8 inline-flex items-center gap-3 rounded-full bg-[#D8C18B] px-7 py-4 text-xs font-semibold uppercase tracking-[0.15em] text-[#14291F] transition duration-300 hover:-translate-y-1 hover:bg-[#E8D8AE] hover:shadow-xl"
+            >
+              <MessageCircle size={17} />
+              Message Us
+              <ArrowUpRight size={15} />
+            </a>
+          </div>
+        </ScrollReveal>
+      </section>
+    </main>
   );
 };
 
