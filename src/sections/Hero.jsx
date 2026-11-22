@@ -186,19 +186,6 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* VIDEO SOUND CONTROL */}
-      <button
-        type="button"
-        onClick={toggleSound}
-        aria-label={muted ? "Turn video sound on" : "Mute video"}
-        className="absolute right-4 top-36 z-20 inline-flex h-10 items-center gap-2 rounded-full border border-white/25 bg-black/25 px-3 text-white backdrop-blur-lg transition hover:border-[#D9C28D] hover:text-[#E7D2A0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9C28D] sm:right-8 sm:top-36 sm:h-11 sm:px-4 lg:top-40"
-      >
-        {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-        <span className="text-[9px] font-medium uppercase tracking-[0.15em]">
-          {muted ? "Sound off" : "Sound on"}
-        </span>
-      </button>
-
       {/* VIDEO STATUS */}
       <div className="absolute right-5 top-[184px] z-10 hidden items-center gap-2 text-[8px] uppercase tracking-[0.2em] text-white/65 sm:flex sm:right-8 sm:top-[194px] lg:top-[198px]">
         <span
