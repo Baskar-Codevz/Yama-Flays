@@ -32,6 +32,7 @@ const __dirname = path.dirname(__filename);
 const allowedOrigins = [
   "http://localhost:5173",
   "https://yama-flays.vercel.app",
+  "https://yama-flays.netlify.app",
 ];
 
 app.use(
